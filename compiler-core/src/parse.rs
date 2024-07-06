@@ -116,14 +116,29 @@ enum InternalAttribute {
 struct Attributes {
     target: Option<Target>,
     deprecated: Deprecation,
-    external_erlang: Option<(EcoString, EcoString)>,
-    external_javascript: Option<(EcoString, EcoString)>,
+    externals: Vec<(EcoString, EcoString)>,
     internal: InternalAttribute,
 }
 
 impl Attributes {
     fn has_function_only(&self) -> bool {
-        self.external_erlang.is_some() || self.external_javascript.is_some()
+        !self.externals.is_empty()
+    }
+
+    fn has_external(&self, external: &str) -> bool {
+        self.externals.iter().any(|v| v.0 == external)
+    }
+
+    fn take(&mut self, external: &str) -> Option<(EcoString, EcoString)> {
+        match self
+            .externals
+            .iter()
+            .enumerate()
+            .find(|(_, v)| v.0 == external)
+        {
+            None => None,
+            Some((idx, _)) => self.externals.drain(idx..=idx).next(),
+        }
     }
 }
 
@@ -1702,8 +1717,8 @@ where
             return_type: (),
             return_annotation,
             deprecation: std::mem::take(&mut attributes.deprecated),
-            external_erlang: attributes.external_erlang.take(),
-            external_javascript: attributes.external_javascript.take(),
+            external_erlang: attributes.take("erlang"),
+            external_javascript: attributes.take("javascript"),
             implementations: Implementations {
                 gleam: true,
                 can_run_on_erlang: true,
@@ -3147,10 +3162,10 @@ where
                 let (_, function, _) = self.expect_string()?;
                 let _ = self.maybe_one(&Token::Comma);
                 let (_, end) = self.expect_one(&Token::RightParen)?;
-                if attributes.external_erlang.is_some() {
+                if attributes.has_external("erlang") {
                     return parse_error(ParseErrorType::DuplicateAttribute, SrcSpan { start, end });
                 }
-                attributes.external_erlang = Some((module, function));
+                attributes.externals.push((module, function));
                 Ok(end)
             }
 
@@ -3161,10 +3176,10 @@ where
                 let (_, function, _) = self.expect_string()?;
                 let _ = self.maybe_one(&Token::Comma);
                 let _ = self.expect_one(&Token::RightParen)?;
-                if attributes.external_javascript.is_some() {
+                if attributes.has_external("javascript") {
                     return parse_error(ParseErrorType::DuplicateAttribute, SrcSpan { start, end });
                 }
-                attributes.external_javascript = Some((module, function));
+                attributes.externals.push((module, function));
                 Ok(end)
             }
 
