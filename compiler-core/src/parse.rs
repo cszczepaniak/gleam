@@ -129,16 +129,8 @@ impl Attributes {
         self.externals.iter().any(|v| v.target == target)
     }
 
-    fn take(&mut self, target: Target) -> Option<External> {
-        match self
-            .externals
-            .iter()
-            .enumerate()
-            .find(|(_, v)| v.target == target)
-        {
-            None => None,
-            Some((idx, _)) => self.externals.drain(idx..=idx).next(),
-        }
+    fn take_externals(&mut self) -> Vec<External> {
+        self.externals.drain(0..).collect()
     }
 }
 
@@ -1717,8 +1709,7 @@ where
             return_type: (),
             return_annotation,
             deprecation: std::mem::take(&mut attributes.deprecated),
-            external_erlang: attributes.take(Target::Erlang),
-            external_javascript: attributes.take(Target::JavaScript),
+            externals: attributes.take_externals(),
             implementations: Implementations {
                 gleam: true,
                 can_run_on_erlang: true,

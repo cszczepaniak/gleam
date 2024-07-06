@@ -361,7 +361,7 @@ fn module_function<'a>(
 ) -> Option<Document<'a>> {
     // Private external functions don't need to render anything, the underlying
     // Erlang implementation is used directly at the call site.
-    if function.external_erlang.is_some() && function.publicity.is_private() {
+    if function.has_external_for(Target::Erlang) && function.publicity.is_private() {
         return None;
     }
 
@@ -386,8 +386,7 @@ fn module_function<'a>(
     let arguments = fun_args(&function.arguments, &mut env);
 
     let body = function
-        .external_erlang
-        .as_ref()
+        .external_for(Target::Erlang)
         .map(
             |External {
                  module, function, ..

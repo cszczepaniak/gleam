@@ -734,13 +734,13 @@ impl<'comments> Formatter<'comments> {
         let external = |t: &'static str, m: &'a str, f: &'a str| {
             docvec!["@external(", t, ", \"", m, "\", \"", f, "\")", line()]
         };
-        let attributes = match function.external_erlang.as_ref() {
+        let attributes = match function.external_for(Target::Erlang) {
             Some(External {
                 module, function, ..
             }) => attributes.append(external("erlang", module, function)),
             None => attributes,
         };
-        let attributes = match function.external_javascript.as_ref() {
+        let attributes = match function.external_for(Target::JavaScript) {
             Some(External {
                 module, function, ..
             }) => attributes.append(external("javascript", module, function)),

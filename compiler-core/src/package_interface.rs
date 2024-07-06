@@ -494,8 +494,7 @@ impl ModuleInterface {
                     end_position: _,
                     body: _,
                     return_annotation: _,
-                    external_erlang: _,
-                    external_javascript: _,
+                    externals: _,
                 }) => {
                     let mut id_map = IdMap::new();
                     let _ = functions.insert(

@@ -489,8 +489,7 @@ pub struct Function<T, Expr> {
     pub return_annotation: Option<TypeAst>,
     pub return_type: T,
     pub documentation: Option<EcoString>,
-    pub external_erlang: Option<External>,
-    pub external_javascript: Option<External>,
+    pub externals: Vec<External>,
     pub implementations: Implementations,
 }
 
@@ -500,6 +499,14 @@ pub type UntypedFunction = Function<(), UntypedExpr>;
 impl<T, E> Function<T, E> {
     fn full_location(&self) -> SrcSpan {
         SrcSpan::new(self.location.start, self.end_position)
+    }
+
+    pub fn external_for(&self, target: Target) -> Option<&External> {
+        self.externals.iter().find(|e| e.target == target)
+    }
+
+    pub fn has_external_for(&self, target: Target) -> bool {
+        self.externals.iter().any(|e| e.target == target)
     }
 }
 

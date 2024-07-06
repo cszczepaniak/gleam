@@ -405,17 +405,16 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
         environment: &mut Environment<'_>,
     ) -> TypedDefinition {
         let Function {
-            documentation: doc,
+            documentation: ref doc,
             location,
-            name,
+            ref name,
             publicity,
-            arguments,
-            body,
-            return_annotation,
+            ref arguments,
+            ref body,
+            ref return_annotation,
             end_position: end_location,
-            deprecation,
-            external_erlang,
-            external_javascript,
+            ref deprecation,
+            ref externals,
             return_type: (),
             implementations: _,
         } = f;
@@ -432,20 +431,15 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
 
         // Ensure that folks are not writing inline JavaScript expressions as
         // the implementation for JS externals.
-        self.assert_valid_javascript_external(&name, external_javascript.as_ref(), location);
+        self.assert_valid_javascript_external(&name, f.external_for(Target::JavaScript), location);
 
         // Find the external implementation for the current target, if one has been given.
-        let external =
-            target_function_implementation(target, &external_erlang, &external_javascript);
+        let external = f.external_for(target);
         let (impl_module, impl_function) = implementation_names(external, &self.module_name, &name);
 
         // The function must have at least one implementation somewhere.
-        let has_implementation = self.ensure_function_has_an_implementation(
-            &body,
-            &external_erlang,
-            &external_javascript,
-            location,
-        );
+        let has_implementation =
+            self.ensure_function_has_an_implementation(&body, &externals, location);
 
         if external.is_some() {
             // There was an external implementation, so type annotations are
@@ -458,14 +452,14 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
         let has_body = !body.first().is_placeholder();
         let definition = FunctionDefinition {
             has_body,
-            has_erlang_external: external_erlang.is_some(),
-            has_javascript_external: external_javascript.is_some(),
+            has_erlang_external: f.has_external_for(Target::Erlang),
+            has_javascript_external: f.has_external_for(Target::JavaScript),
         };
 
         let typed_args = arguments
             .into_iter()
             .zip(&prereg_args_types)
-            .map(|(a, t)| a.set_type(t.clone()))
+            .map(|(a, t)| a.clone().set_type(t.clone()))
             .collect_vec();
 
         // Infer the type using the preregistered args + return types as a starting point
@@ -473,12 +467,12 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
             let mut expr_typer = ExprTyper::new(environment, definition, &mut self.errors);
             expr_typer.hydrator = self
                 .hydrators
-                .remove(&name)
+                .remove(name)
                 .expect("Could not find hydrator for fn");
 
             let (args, body) = expr_typer.infer_fn_with_known_types(
                 typed_args.clone(),
-                body,
+                body.clone(),
                 Some(prereg_return_type.clone()),
             )?;
             let args_types = args.iter().map(|a| a.type_.clone()).collect();
@@ -550,20 +544,19 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
         );
 
         Definition::Function(Function {
-            documentation: doc,
+            documentation: doc.clone(),
             location,
-            name,
+            name: name.clone(),
             publicity,
-            deprecation,
+            deprecation: deprecation.clone(),
             arguments: typed_args,
             end_position: end_location,
-            return_annotation,
+            return_annotation: return_annotation.clone(),
             return_type: preregistered_type
                 .return_type()
                 .expect("Could not find return type for fn"),
             body,
-            external_erlang,
-            external_javascript,
+            externals: externals.to_vec(),
             implementations,
         })
     }
@@ -630,16 +623,14 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
     fn ensure_function_has_an_implementation(
         &mut self,
         body: &Vec1<UntypedStatement>,
-        external_erlang: &Option<External>,
-        external_javascript: &Option<External>,
+        externals: &Vec<External>,
         location: SrcSpan,
     ) -> bool {
-        match (external_erlang, external_javascript) {
-            (None, None) if body.first().is_placeholder() => {
-                self.errors.push(Error::NoImplementation { location });
-                false
-            }
-            _ => true,
+        if externals.len() == 0 && body.first().is_placeholder() {
+            self.errors.push(Error::NoImplementation { location });
+            false
+        } else {
+            true
         }
     }
 
@@ -1110,8 +1101,7 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
             return_annotation,
             publicity,
             documentation,
-            external_erlang,
-            external_javascript,
+            externals,
             deprecation,
             end_position: _,
             body: _,
@@ -1127,7 +1117,7 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
 
         // When external implementations are present then the type annotations
         // must be given in full, so we disallow holes in the annotations.
-        hydrator.permit_holes(external_erlang.is_none() && external_javascript.is_none());
+        hydrator.permit_holes(externals.len() == 0);
 
         let arg_types = args
             .iter()
@@ -1137,11 +1127,7 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
         let typ = fn_(arg_types, return_type);
         let _ = self.hydrators.insert(name.clone(), hydrator);
 
-        let external = target_function_implementation(
-            environment.target,
-            external_erlang,
-            external_javascript,
-        );
+        let external = f.external_for(environment.target);
         let (impl_module, impl_function) = implementation_names(external, &self.module_name, name);
         let variant = ValueConstructorVariant::ModuleFn {
             documentation: documentation.clone(),
@@ -1210,7 +1196,7 @@ fn validate_module_name(name: &EcoString) -> Result<(), Error> {
 /// same as the name of the module and function. If the function has an external
 /// implementation then it is the name of the external module and function.
 fn implementation_names(
-    external: &Option<External>,
+    external: Option<&External>,
     module_name: &EcoString,
     name: &EcoString,
 ) -> (EcoString, EcoString) {
@@ -1219,17 +1205,6 @@ fn implementation_names(
         Some(External {
             module, function, ..
         }) => (module.clone(), function.clone()),
-    }
-}
-
-fn target_function_implementation<'a>(
-    target: Target,
-    external_erlang: &'a Option<External>,
-    external_javascript: &'a Option<External>,
-) -> &'a Option<External> {
-    match target {
-        Target::Erlang => external_erlang,
-        Target::JavaScript => external_javascript,
     }
 }
 
@@ -1386,25 +1361,24 @@ fn generalise_module_constant(
 }
 
 fn generalise_function(
-    function: TypedFunction,
+    f: TypedFunction,
     environment: &mut Environment<'_>,
     module_name: &EcoString,
 ) -> TypedDefinition {
     let Function {
-        documentation: doc,
+        documentation: ref doc,
         location,
-        name,
+        ref name,
         publicity,
-        deprecation,
-        arguments: args,
-        body,
-        return_annotation,
+        ref deprecation,
+        arguments: ref args,
+        ref body,
+        ref return_annotation,
         end_position: end_location,
-        return_type,
-        external_erlang,
-        external_javascript,
+        ref return_type,
+        ref externals,
         implementations,
-    } = function;
+    } = f;
 
     // Lookup the inferred function information
     let function = environment
@@ -1416,8 +1390,7 @@ fn generalise_function(
     let type_ = type_::generalise(typ);
 
     // Insert the function into the module's interface
-    let external =
-        target_function_implementation(environment.target, &external_erlang, &external_javascript);
+    let external = f.external_for(environment.target);
     let (impl_module, impl_function) = implementation_names(external, module_name, &name);
 
     let variant = ValueConstructorVariant::ModuleFn {
@@ -1447,18 +1420,17 @@ fn generalise_function(
     );
 
     Definition::Function(Function {
-        documentation: doc,
+        documentation: doc.clone(),
         location,
-        name,
+        name: name.clone(),
         publicity,
-        deprecation,
-        arguments: args,
+        deprecation: deprecation.clone(),
+        arguments: args.to_vec(),
         end_position: end_location,
-        return_annotation,
-        return_type,
-        body,
-        external_erlang,
-        external_javascript,
+        return_annotation: return_annotation.clone(),
+        return_type: return_type.clone(),
+        body: body.clone(),
+        externals: externals.to_vec(),
         implementations,
     })
 }
