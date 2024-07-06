@@ -454,6 +454,20 @@ impl Publicity {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// An external function spec.
+///
+/// # Example(s)
+///
+/// ```gleam
+/// @external(erlang, "wibble", "wobble")
+/// ```
+pub struct External {
+    pub target: Target,
+    pub module: EcoString,
+    pub function: EcoString,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 /// A function definition
 ///
 /// # Example(s)
