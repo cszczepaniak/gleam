@@ -112,11 +112,18 @@ enum InternalAttribute {
     Present(SrcSpan),
 }
 
+#[derive(Debug)]
+struct External {
+    target: Target,
+    module: EcoString,
+    function: EcoString,
+}
+
 #[derive(Debug, Default)]
 struct Attributes {
     target: Option<Target>,
     deprecated: Deprecation,
-    externals: Vec<(EcoString, EcoString)>,
+    externals: Vec<External>,
     internal: InternalAttribute,
 }
 
@@ -125,16 +132,16 @@ impl Attributes {
         !self.externals.is_empty()
     }
 
-    fn has_external(&self, external: &str) -> bool {
-        self.externals.iter().any(|v| v.0 == external)
+    fn has_external(&self, target: Target) -> bool {
+        self.externals.iter().any(|v| v.target == target)
     }
 
-    fn take(&mut self, external: &str) -> Option<(EcoString, EcoString)> {
+    fn take(&mut self, target: Target) -> Option<External> {
         match self
             .externals
             .iter()
             .enumerate()
-            .find(|(_, v)| v.0 == external)
+            .find(|(_, v)| v.target == target)
         {
             None => None,
             Some((idx, _)) => self.externals.drain(idx..=idx).next(),
@@ -1717,8 +1724,12 @@ where
             return_type: (),
             return_annotation,
             deprecation: std::mem::take(&mut attributes.deprecated),
-            external_erlang: attributes.take("erlang"),
-            external_javascript: attributes.take("javascript"),
+            external_erlang: attributes
+                .take(Target::Erlang)
+                .map(|ext| (ext.module, ext.function)),
+            external_javascript: attributes
+                .take(Target::JavaScript)
+                .map(|ext| (ext.module, ext.function)),
             implementations: Implementations {
                 gleam: true,
                 can_run_on_erlang: true,
@@ -3162,10 +3173,14 @@ where
                 let (_, function, _) = self.expect_string()?;
                 let _ = self.maybe_one(&Token::Comma);
                 let (_, end) = self.expect_one(&Token::RightParen)?;
-                if attributes.has_external("erlang") {
+                if attributes.has_external(Target::Erlang) {
                     return parse_error(ParseErrorType::DuplicateAttribute, SrcSpan { start, end });
                 }
-                attributes.externals.push((module, function));
+                attributes.externals.push(External {
+                    target: Target::Erlang,
+                    module,
+                    function,
+                });
                 Ok(end)
             }
 
@@ -3176,10 +3191,14 @@ where
                 let (_, function, _) = self.expect_string()?;
                 let _ = self.maybe_one(&Token::Comma);
                 let _ = self.expect_one(&Token::RightParen)?;
-                if attributes.has_external("javascript") {
+                if attributes.has_external(Target::JavaScript) {
                     return parse_error(ParseErrorType::DuplicateAttribute, SrcSpan { start, end });
                 }
-                attributes.externals.push((module, function));
+                attributes.externals.push(External {
+                    target: Target::JavaScript,
+                    module,
+                    function,
+                });
                 Ok(end)
             }
 
