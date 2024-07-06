@@ -353,16 +353,12 @@ impl<'a> Generator<'a> {
                     name,
                     publicity,
                     externals,
-                    // external_javascript:
-                    //     Some(External {
-                    //         module, function, ..
-                    //     }),
                     ..
                 }) if externals.iter().any(|e| e.target == Target::JavaScript) => {
                     let external_javascript = externals
                         .iter()
                         .find(|e| e.target == Target::JavaScript)
-                        .unwrap();
+                        .expect("we know this is Some because we just checked");
                     self.register_external_function(
                         &mut imports,
                         *publicity,
