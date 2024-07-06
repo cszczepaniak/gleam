@@ -421,7 +421,7 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
         let target = environment.target;
         let body_location = body.last().location();
         let preregistered_fn = environment
-            .get_variable(&name)
+            .get_variable(name)
             .expect("Could not find preregistered type for function");
         let field_map = preregistered_fn.field_map().cloned();
         let preregistered_type = preregistered_fn.type_.clone();
@@ -431,22 +431,22 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
 
         // Ensure that folks are not writing inline JavaScript expressions as
         // the implementation for JS externals.
-        self.assert_valid_javascript_external(&name, f.external_for(Target::JavaScript), location);
+        self.assert_valid_javascript_external(name, f.external_for(Target::JavaScript), location);
 
         // Find the external implementation for the current target, if one has been given.
         let external = f.external_for(target);
-        let (impl_module, impl_function) = implementation_names(external, &self.module_name, &name);
+        let (impl_module, impl_function) = implementation_names(external, &self.module_name, name);
 
         // The function must have at least one implementation somewhere.
         let has_implementation =
-            self.ensure_function_has_an_implementation(&body, &externals, location);
+            self.ensure_function_has_an_implementation(body, externals, location);
 
         if external.is_some() {
             // There was an external implementation, so type annotations are
             // mandatory as the Gleam implementation may be absent, and because we
             // think you should always specify types for external functions for
             // clarity + to avoid accidental mistakes.
-            self.ensure_annotations_present(&arguments, return_annotation.as_ref(), location);
+            self.ensure_annotations_present(arguments, return_annotation.as_ref(), location);
         }
 
         let has_body = !body.first().is_placeholder();
@@ -457,7 +457,7 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
         };
 
         let typed_args = arguments
-            .into_iter()
+            .iter()
             .zip(&prereg_args_types)
             .map(|(a, t)| a.clone().set_type(t.clone()))
             .collect_vec();
@@ -623,10 +623,10 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
     fn ensure_function_has_an_implementation(
         &mut self,
         body: &Vec1<UntypedStatement>,
-        externals: &Vec<External>,
+        externals: &[External],
         location: SrcSpan,
     ) -> bool {
-        if externals.len() == 0 && body.first().is_placeholder() {
+        if externals.is_empty() && body.first().is_placeholder() {
             self.errors.push(Error::NoImplementation { location });
             false
         } else {
@@ -1117,7 +1117,7 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
 
         // When external implementations are present then the type annotations
         // must be given in full, so we disallow holes in the annotations.
-        hydrator.permit_holes(externals.len() == 0);
+        hydrator.permit_holes(externals.is_empty());
 
         let arg_types = args
             .iter()
@@ -1382,7 +1382,7 @@ fn generalise_function(
 
     // Lookup the inferred function information
     let function = environment
-        .get_variable(&name)
+        .get_variable(name)
         .expect("Could not find preregistered type for function");
     let field_map = function.field_map().cloned();
     let typ = function.type_.clone();
@@ -1391,7 +1391,7 @@ fn generalise_function(
 
     // Insert the function into the module's interface
     let external = f.external_for(environment.target);
-    let (impl_module, impl_function) = implementation_names(external, module_name, &name);
+    let (impl_module, impl_function) = implementation_names(external, module_name, name);
 
     let variant = ValueConstructorVariant::ModuleFn {
         documentation: doc.clone(),
