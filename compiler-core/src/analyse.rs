@@ -585,7 +585,7 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
         };
         if !MODULE
             .get_or_init(|| Regex::new("^[@a-zA-Z0-9\\./:_-]+$").expect("regex"))
-            .is_match(&module)
+            .is_match(module)
         {
             self.errors.push(Error::InvalidExternalJavascriptModule {
                 location,
@@ -595,7 +595,7 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
         }
         if !FUNCTION
             .get_or_init(|| Regex::new("^[a-zA-Z_][a-zA-Z0-9_]*$").expect("regex"))
-            .is_match(&function)
+            .is_match(function)
         {
             self.errors.push(Error::InvalidExternalJavascriptFunction {
                 location,
