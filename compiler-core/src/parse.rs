@@ -1717,12 +1717,8 @@ where
             return_type: (),
             return_annotation,
             deprecation: std::mem::take(&mut attributes.deprecated),
-            external_erlang: attributes
-                .take(Target::Erlang)
-                .map(|ext| (ext.module, ext.function)),
-            external_javascript: attributes
-                .take(Target::JavaScript)
-                .map(|ext| (ext.module, ext.function)),
+            external_erlang: attributes.take(Target::Erlang),
+            external_javascript: attributes.take(Target::JavaScript),
             implementations: Implementations {
                 gleam: true,
                 can_run_on_erlang: true,

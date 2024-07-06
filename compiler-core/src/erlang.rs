@@ -388,7 +388,11 @@ fn module_function<'a>(
     let body = function
         .external_erlang
         .as_ref()
-        .map(|(module, function)| docvec![atom(module), ":", atom(function), arguments.clone()])
+        .map(
+            |External {
+                 module, function, ..
+             }| docvec![atom(module), ":", atom(function), arguments.clone()],
+        )
         .unwrap_or_else(|| statement_sequence(&function.body, &mut env));
 
     let doc = spec

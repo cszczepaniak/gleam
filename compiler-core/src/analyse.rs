@@ -4,7 +4,7 @@ mod tests;
 
 use crate::{
     ast::{
-        self, BitArrayOption, CustomType, Definition, DefinitionLocation, Function,
+        self, BitArrayOption, CustomType, Definition, DefinitionLocation, External, Function,
         GroupedStatements, Import, ModuleConstant, Publicity, RecordConstructor,
         RecordConstructorArg, SrcSpan, Statement, TypeAlias, TypeAst, TypeAstConstructor,
         TypeAstFn, TypeAstHole, TypeAstTuple, TypeAstVar, TypedDefinition, TypedExpr,
@@ -571,7 +571,7 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
     fn assert_valid_javascript_external(
         &mut self,
         function_name: &EcoString,
-        external_javascript: Option<&(EcoString, EcoString)>,
+        external_javascript: Option<&External>,
         location: SrcSpan,
     ) {
         use regex::Regex;
@@ -581,11 +581,11 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
 
         let (module, function) = match external_javascript {
             None => return,
-            Some(external) => external,
+            Some(external) => (&external.module, &external.function),
         };
         if !MODULE
             .get_or_init(|| Regex::new("^[@a-zA-Z0-9\\./:_-]+$").expect("regex"))
-            .is_match(module)
+            .is_match(&module)
         {
             self.errors.push(Error::InvalidExternalJavascriptModule {
                 location,
@@ -595,7 +595,7 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
         }
         if !FUNCTION
             .get_or_init(|| Regex::new("^[a-zA-Z_][a-zA-Z0-9_]*$").expect("regex"))
-            .is_match(function)
+            .is_match(&function)
         {
             self.errors.push(Error::InvalidExternalJavascriptFunction {
                 location,
@@ -630,8 +630,8 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
     fn ensure_function_has_an_implementation(
         &mut self,
         body: &Vec1<UntypedStatement>,
-        external_erlang: &Option<(EcoString, EcoString)>,
-        external_javascript: &Option<(EcoString, EcoString)>,
+        external_erlang: &Option<External>,
+        external_javascript: &Option<External>,
         location: SrcSpan,
     ) -> bool {
         match (external_erlang, external_javascript) {
@@ -1210,21 +1210,23 @@ fn validate_module_name(name: &EcoString) -> Result<(), Error> {
 /// same as the name of the module and function. If the function has an external
 /// implementation then it is the name of the external module and function.
 fn implementation_names(
-    external: &Option<(EcoString, EcoString)>,
+    external: &Option<External>,
     module_name: &EcoString,
     name: &EcoString,
 ) -> (EcoString, EcoString) {
     match external {
         None => (module_name.clone(), name.clone()),
-        Some((m, f)) => (m.clone(), f.clone()),
+        Some(External {
+            module, function, ..
+        }) => (module.clone(), function.clone()),
     }
 }
 
 fn target_function_implementation<'a>(
     target: Target,
-    external_erlang: &'a Option<(EcoString, EcoString)>,
-    external_javascript: &'a Option<(EcoString, EcoString)>,
-) -> &'a Option<(EcoString, EcoString)> {
+    external_erlang: &'a Option<External>,
+    external_javascript: &'a Option<External>,
+) -> &'a Option<External> {
     match target {
         Target::Erlang => external_erlang,
         Target::JavaScript => external_javascript,

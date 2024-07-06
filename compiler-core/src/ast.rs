@@ -489,8 +489,8 @@ pub struct Function<T, Expr> {
     pub return_annotation: Option<TypeAst>,
     pub return_type: T,
     pub documentation: Option<EcoString>,
-    pub external_erlang: Option<(EcoString, EcoString)>,
-    pub external_javascript: Option<(EcoString, EcoString)>,
+    pub external_erlang: Option<External>,
+    pub external_javascript: Option<External>,
     pub implementations: Implementations,
 }
 

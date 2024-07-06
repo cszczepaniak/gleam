@@ -352,7 +352,10 @@ impl<'a> Generator<'a> {
                 Definition::Function(Function {
                     name,
                     publicity,
-                    external_javascript: Some((module, function)),
+                    external_javascript:
+                        Some(External {
+                            module, function, ..
+                        }),
                     ..
                 }) => {
                     self.register_external_function(
