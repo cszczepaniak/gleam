@@ -27,7 +27,7 @@ use crate::{
         TypedRecordUpdateArg, UntypedMultiPattern, UntypedPattern, UntypedRecordUpdateArg,
     },
     bit_array,
-    build::{Origin, Target},
+    build::{Origin, Target, TargetSet},
     line_numbers::LineNumbers,
     type_::expression::Implementations,
 };
@@ -510,10 +510,8 @@ impl ValueConstructorVariant {
             | ValueConstructorVariant::LocalConstant { .. }
             | ValueConstructorVariant::LocalVariable { .. } => Implementations {
                 gleam: true,
-                can_run_on_erlang: true,
-                can_run_on_javascript: true,
-                uses_javascript_externals: false,
-                uses_erlang_externals: false,
+                can_run_on: TargetSet::all(),
+                externals_used: TargetSet::new(),
             },
 
             ValueConstructorVariant::ModuleFn {

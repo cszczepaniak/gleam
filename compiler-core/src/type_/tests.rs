@@ -2,7 +2,7 @@ use super::*;
 use crate::{
     analyse::TargetSupport,
     ast::{TypedModule, TypedStatement, UntypedExpr, UntypedModule},
-    build::{Origin, Outcome, Target},
+    build::{Origin, Outcome, Target, TargetSet},
     config::PackageConfig,
     error::Error,
     type_::{build_prelude, expression::FunctionDefinition, pretty::Printer},
@@ -263,7 +263,7 @@ fn compile_statement_sequence(
         ),
         FunctionDefinition {
             has_body: true,
-            external_targets: HashSet::new(),
+            external_targets: TargetSet::new(),
         },
         errors,
     )
@@ -2070,10 +2070,8 @@ fn assert_suitable_main_function_not_module_function() {
             },
             implementations: Implementations {
                 gleam: true,
-                uses_erlang_externals: false,
-                uses_javascript_externals: false,
-                can_run_on_erlang: true,
-                can_run_on_javascript: true,
+                externals_used: TargetSet::new(),
+                can_run_on: TargetSet::all(),
             },
         },
     };
@@ -2095,10 +2093,8 @@ fn assert_suitable_main_function_wrong_arity() {
             module: "module".into(),
             implementations: Implementations {
                 gleam: true,
-                uses_erlang_externals: false,
-                uses_javascript_externals: false,
-                can_run_on_erlang: true,
-                can_run_on_javascript: true,
+                externals_used: TargetSet::new(),
+                can_run_on: TargetSet::all(),
             },
         },
     };
@@ -2120,10 +2116,8 @@ fn assert_suitable_main_function_ok() {
             module: "module".into(),
             implementations: Implementations {
                 gleam: true,
-                uses_erlang_externals: false,
-                uses_javascript_externals: false,
-                can_run_on_erlang: true,
-                can_run_on_javascript: true,
+                externals_used: TargetSet::new(),
+                can_run_on: TargetSet::all(),
             },
         },
     };
@@ -2145,10 +2139,8 @@ fn assert_suitable_main_function_erlang_not_supported() {
             module: "module".into(),
             implementations: Implementations {
                 gleam: false,
-                uses_erlang_externals: true,
-                uses_javascript_externals: true,
-                can_run_on_erlang: false,
-                can_run_on_javascript: true,
+                externals_used: TargetSet::all(),
+                can_run_on: vec![Target::JavaScript].into_iter().collect(),
             },
         },
     };
@@ -2170,10 +2162,8 @@ fn assert_suitable_main_function_javascript_not_supported() {
             module: "module".into(),
             implementations: Implementations {
                 gleam: false,
-                uses_erlang_externals: true,
-                uses_javascript_externals: true,
-                can_run_on_erlang: true,
-                can_run_on_javascript: false,
+                externals_used: TargetSet::all(),
+                can_run_on: vec![Target::Erlang].into_iter().collect(),
             },
         },
     };

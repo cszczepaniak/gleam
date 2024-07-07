@@ -1,10 +1,9 @@
-use std::collections::HashSet;
 use std::sync::Arc;
 
 use camino::Utf8PathBuf;
 
 use crate::analyse::TargetSupport;
-use crate::build::Target;
+use crate::build::{Target, TargetSet};
 use crate::config::PackageConfig;
 use crate::line_numbers::LineNumbers;
 use crate::type_::expression::FunctionDefinition;
@@ -146,7 +145,7 @@ fn compile_expression(src: &str) -> TypedStatement {
         &mut environment,
         FunctionDefinition {
             has_body: true,
-            external_targets: HashSet::new(),
+            external_targets: TargetSet::new(),
         },
         errors,
     )

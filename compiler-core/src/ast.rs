@@ -12,7 +12,7 @@ pub use self::untyped::{UntypedExpr, Use};
 pub use self::constant::{Constant, TypedConstant, UntypedConstant};
 
 use crate::analyse::Inferred;
-use crate::build::{Located, Target};
+use crate::build::{Located, Target, TargetSet};
 use crate::type_::expression::Implementations;
 use crate::type_::{
     self, Deprecation, ModuleValueConstructor, PatternConstructor, Type, ValueConstructor,
@@ -509,8 +509,8 @@ impl<T, E> Function<T, E> {
         self.externals.iter().any(|e| e.target == target)
     }
 
-    pub fn external_targets<'a>(&'a self) -> impl Iterator<Item = Target> + 'a {
-        self.externals.iter().map(|e| e.target)
+    pub fn external_targets<'a>(&'a self) -> TargetSet {
+        self.externals.iter().map(|e| e.target.clone()).collect()
     }
 }
 

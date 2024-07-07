@@ -8,7 +8,7 @@ use crate::{
         BitArrayOption, BitArraySegment, CallArg, Constant, Publicity, SrcSpan, TypedConstant,
         TypedConstantBitArraySegment, TypedConstantBitArraySegmentOption,
     },
-    build::Origin,
+    build::{Origin, Target, TargetSet},
     line_numbers::LineNumbers,
     schema_capnp::{self as schema, *},
     type_::{
@@ -474,12 +474,17 @@ impl ModuleDecoder {
     }
 
     fn implementations(&self, reader: implementations::Reader<'_>) -> Implementations {
+        let mut externals_used = TargetSet::new();
+        externals_used.insert_if(Target::Erlang, reader.get_uses_erlang_externals());
+        externals_used.insert_if(Target::JavaScript, reader.get_uses_javascript_externals());
+
+        let mut can_run_on = TargetSet::new();
+        can_run_on.insert_if(Target::Erlang, reader.get_can_run_on_erlang());
+        can_run_on.insert_if(Target::JavaScript, reader.get_can_run_on_javascript());
         Implementations {
             gleam: reader.get_gleam(),
-            uses_erlang_externals: reader.get_uses_erlang_externals(),
-            uses_javascript_externals: reader.get_uses_javascript_externals(),
-            can_run_on_erlang: reader.get_can_run_on_erlang(),
-            can_run_on_javascript: reader.get_can_run_on_javascript(),
+            externals_used,
+            can_run_on,
         }
     }
 

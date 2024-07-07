@@ -65,6 +65,79 @@ pub enum Target {
     JavaScript,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialOrd, Ord, PartialEq, Serialize)]
+pub struct TargetSet {
+    // target_set is a bitfield containing a 1 when a target is present and 0
+    // when it is not.
+    targets_set: usize,
+}
+
+impl FromIterator<Target> for TargetSet {
+    fn from_iter<T: IntoIterator<Item = Target>>(iter: T) -> Self {
+        let mut res = Self::new();
+        for targ in iter {
+            res.insert(targ);
+        }
+        res
+    }
+}
+
+impl From<Target> for TargetSet {
+    fn from(value: Target) -> Self {
+        Self {
+            targets_set: match value {
+                Target::Erlang => 1 << 0,
+                Target::JavaScript => 1 << 1,
+            },
+        }
+    }
+}
+
+impl TargetSet {
+    pub fn new() -> Self {
+        Self { targets_set: 0 }
+    }
+
+    pub fn all() -> Self {
+        let mut res = Self::new();
+        res.insert(Target::Erlang);
+        res.insert(Target::JavaScript);
+        res
+    }
+
+    pub fn insert(&mut self, target: Target) {
+        self.merge(target.into())
+    }
+
+    pub fn remove(&mut self, target: Target) {
+        let other: TargetSet = target.into();
+        self.targets_set &= !other.targets_set;
+    }
+
+    pub fn insert_if(&mut self, target: Target, pred: bool) {
+        if pred {
+            self.insert(target)
+        }
+    }
+
+    pub fn retain<F: Fn(Target) -> bool>(&mut self, f: F) {
+        for target in [Target::Erlang, Target::JavaScript] {
+            if !f(target) {
+                self.remove(target)
+            }
+        }
+    }
+
+    pub fn merge(&mut self, other: Self) {
+        self.targets_set |= other.targets_set
+    }
+
+    pub fn contains(&self, target: Target) -> bool {
+        let other: TargetSet = target.into();
+        self.targets_set & other.targets_set != 0
+    }
+}
+
 impl Target {
     pub fn variant_strings() -> Vec<EcoString> {
         Self::VARIANTS.iter().map(|s| (*s).into()).collect()

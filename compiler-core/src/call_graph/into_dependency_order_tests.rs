@@ -1,6 +1,7 @@
 use super::*;
 use crate::{
     ast::{Arg, Function, Publicity},
+    build::{Target, TargetSet},
     type_::{expression::Implementations, Deprecation},
 };
 use ecow::EcoString;
@@ -38,10 +39,8 @@ fn parse_and_order(
             externals: vec![],
             implementations: Implementations {
                 gleam: true,
-                uses_erlang_externals: true,
-                uses_javascript_externals: false,
-                can_run_on_erlang: true,
-                can_run_on_javascript: true,
+                externals_used: [Target::Erlang].into_iter().collect(),
+                can_run_on: TargetSet::all(),
             },
         })
         .collect_vec();
@@ -58,10 +57,8 @@ fn parse_and_order(
                 value: Box::from(const_value),
                 implementations: Implementations {
                     gleam: true,
-                    uses_erlang_externals: true,
-                    uses_javascript_externals: false,
-                    can_run_on_erlang: true,
-                    can_run_on_javascript: true,
+                    externals_used: [Target::Erlang].into_iter().collect(),
+                    can_run_on: TargetSet::all(),
                 },
                 type_: (),
                 deprecation: Deprecation::NotDeprecated,

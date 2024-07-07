@@ -2,7 +2,10 @@ use ecow::EcoString;
 use itertools::Itertools;
 
 use crate::{
-    analyse::TargetSupport, assert_module_error, build::Target, type_::expression::Implementations,
+    analyse::TargetSupport,
+    assert_module_error,
+    build::{Target, TargetSet},
+    type_::expression::Implementations,
 };
 
 use super::compile_module_with_opts;
@@ -48,20 +51,16 @@ pub fn pure_gleam_2() { pure_gleam_1() * 2 }
                 "pure_gleam_1",
                 Implementations {
                     gleam: true,
-                    uses_erlang_externals: false,
-                    uses_javascript_externals: false,
-                    can_run_on_erlang: true,
-                    can_run_on_javascript: true,
+                    externals_used: TargetSet::new(),
+                    can_run_on: TargetSet::all(),
                 }
             ),
             (
                 "pure_gleam_2",
                 Implementations {
                     gleam: true,
-                    uses_erlang_externals: false,
-                    uses_javascript_externals: false,
-                    can_run_on_erlang: true,
-                    can_run_on_javascript: true,
+                    externals_used: TargetSet::new(),
+                    can_run_on: TargetSet::all(),
                 }
             )
         ],
@@ -82,20 +81,16 @@ pub fn erlang_only_2() { erlang_only_1() * 2 }
                 "erlang_only_1",
                 Implementations {
                     gleam: false,
-                    uses_erlang_externals: true,
-                    uses_javascript_externals: false,
-                    can_run_on_erlang: true,
-                    can_run_on_javascript: false,
+                    externals_used: [Target::Erlang].into_iter().collect(),
+                    can_run_on: [Target::Erlang].into_iter().collect(),
                 }
             ),
             (
                 "erlang_only_2",
                 Implementations {
                     gleam: false,
-                    uses_erlang_externals: true,
-                    uses_javascript_externals: false,
-                    can_run_on_erlang: true,
-                    can_run_on_javascript: false,
+                    externals_used: [Target::Erlang].into_iter().collect(),
+                    can_run_on: [Target::Erlang].into_iter().collect(),
                 }
             )
         ],
@@ -117,20 +112,16 @@ pub fn all_externals_2() { all_externals_1() * 2 }
                 "all_externals_1",
                 Implementations {
                     gleam: false,
-                    uses_erlang_externals: true,
-                    uses_javascript_externals: true,
-                    can_run_on_erlang: true,
-                    can_run_on_javascript: true,
+                    externals_used: TargetSet::all(),
+                    can_run_on: TargetSet::all(),
                 }
             ),
             (
                 "all_externals_2",
                 Implementations {
                     gleam: false,
-                    uses_erlang_externals: true,
-                    uses_javascript_externals: true,
-                    can_run_on_erlang: true,
-                    can_run_on_javascript: true,
+                    externals_used: TargetSet::all(),
+                    can_run_on: TargetSet::all(),
                 }
             )
         ],
@@ -156,30 +147,24 @@ pub fn pure_gleam() {
                 "erlang_external_and_pure_body",
                 Implementations {
                     gleam: true,
-                    uses_erlang_externals: true,
-                    uses_javascript_externals: false,
-                    can_run_on_erlang: true,
-                    can_run_on_javascript: true,
+                    externals_used: [Target::Erlang].into_iter().collect(),
+                    can_run_on: TargetSet::all(),
                 }
             ),
             (
                 "javascript_external_and_pure_body",
                 Implementations {
                     gleam: true,
-                    uses_erlang_externals: false,
-                    uses_javascript_externals: true,
-                    can_run_on_erlang: true,
-                    can_run_on_javascript: true,
+                    externals_used: [Target::JavaScript].into_iter().collect(),
+                    can_run_on: TargetSet::all(),
                 }
             ),
             (
                 "pure_gleam",
                 Implementations {
                     gleam: true,
-                    uses_erlang_externals: true,
-                    uses_javascript_externals: true,
-                    can_run_on_erlang: true,
-                    can_run_on_javascript: true,
+                    externals_used: TargetSet::all(),
+                    can_run_on: TargetSet::all(),
                 }
             )
         ],
@@ -203,30 +188,24 @@ pub fn all_externals() -> Int { erlang_external_and_javascript_body() }
                 "all_externals",
                 Implementations {
                     gleam: false,
-                    uses_erlang_externals: true,
-                    uses_javascript_externals: true,
-                    can_run_on_erlang: true,
-                    can_run_on_javascript: true,
+                    externals_used: TargetSet::all(),
+                    can_run_on: TargetSet::all(),
                 }
             ),
             (
                 "erlang_external_and_javascript_body",
                 Implementations {
                     gleam: false,
-                    uses_erlang_externals: true,
-                    uses_javascript_externals: true,
-                    can_run_on_erlang: true,
-                    can_run_on_javascript: true,
+                    externals_used: TargetSet::all(),
+                    can_run_on: TargetSet::all(),
                 }
             ),
             (
                 "javascript_only",
                 Implementations {
                     gleam: false,
-                    uses_erlang_externals: false,
-                    uses_javascript_externals: true,
-                    can_run_on_erlang: false,
-                    can_run_on_javascript: true,
+                    externals_used: [Target::JavaScript].into_iter().collect(),
+                    can_run_on: [Target::JavaScript].into_iter().collect(),
                 }
             )
         ],
@@ -250,30 +229,24 @@ pub fn all_externals() -> Int { javascript_external_and_erlang_body() }
                 "all_externals",
                 Implementations {
                     gleam: false,
-                    uses_erlang_externals: true,
-                    uses_javascript_externals: true,
-                    can_run_on_erlang: true,
-                    can_run_on_javascript: true,
+                    externals_used: TargetSet::all(),
+                    can_run_on: TargetSet::all(),
                 }
             ),
             (
                 "erlang_only",
                 Implementations {
                     gleam: false,
-                    uses_erlang_externals: true,
-                    uses_javascript_externals: false,
-                    can_run_on_erlang: true,
-                    can_run_on_javascript: false,
+                    externals_used: [Target::Erlang].into_iter().collect(),
+                    can_run_on: [Target::Erlang].into_iter().collect(),
                 }
             ),
             (
                 "javascript_external_and_erlang_body",
                 Implementations {
                     gleam: false,
-                    uses_erlang_externals: true,
-                    uses_javascript_externals: true,
-                    can_run_on_erlang: true,
-                    can_run_on_javascript: true,
+                    externals_used: TargetSet::all(),
+                    can_run_on: TargetSet::all(),
                 }
             )
         ],
