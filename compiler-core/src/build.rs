@@ -99,6 +99,21 @@ impl From<Target> for TargetSet {
     }
 }
 
+// These From implementations are useful for serialization/deserialization.
+impl From<u64> for TargetSet {
+    fn from(value: u64) -> Self {
+        Self {
+            targets_set: value as usize,
+        }
+    }
+}
+
+impl From<TargetSet> for u64 {
+    fn from(value: TargetSet) -> Self {
+        value.targets_set as u64
+    }
+}
+
 impl TargetSet {
     pub fn new() -> Self {
         Self { targets_set: 0 }
