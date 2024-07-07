@@ -510,7 +510,7 @@ impl<T, E> Function<T, E> {
     }
 
     pub fn external_targets<'a>(&'a self) -> impl Iterator<Item = Target> + 'a {
-        self.externals.iter().map(|e| e.target.clone())
+        self.externals.iter().map(|e| e.target)
     }
 }
 
