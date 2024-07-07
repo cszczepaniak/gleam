@@ -239,7 +239,7 @@ where
 
     fn write_prelude(&self) -> Result<()> {
         // Only the JavaScript target has a prelude to write.
-        if !self.target().is_javascript() {
+        if self.target() != Target::JavaScript {
             return Ok(());
         }
 

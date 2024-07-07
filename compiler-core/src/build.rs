@@ -69,22 +69,6 @@ impl Target {
     pub fn variant_strings() -> Vec<EcoString> {
         Self::VARIANTS.iter().map(|s| (*s).into()).collect()
     }
-
-    /// Returns `true` if the target is [`JavaScript`].
-    ///
-    /// [`JavaScript`]: Target::JavaScript
-    #[must_use]
-    pub fn is_javascript(&self) -> bool {
-        matches!(self, Self::JavaScript)
-    }
-
-    /// Returns `true` if the target is [`Erlang`].
-    ///
-    /// [`Erlang`]: Target::Erlang
-    #[must_use]
-    pub fn is_erlang(&self) -> bool {
-        matches!(self, Self::Erlang)
-    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialOrd, Ord, PartialEq, Serialize)]

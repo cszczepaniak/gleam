@@ -251,7 +251,7 @@ where
         // resulting in cryptic errors.
         // This would most commonly happen for modules like "user" and
         // "code". Emit an error so this never happens.
-        if self.target.is_erlang() {
+        if self.target == Target::Erlang {
             for input in inputs.collection.values() {
                 ensure_gleam_module_does_not_overwrite_standard_erlang_module(&input)?;
             }
