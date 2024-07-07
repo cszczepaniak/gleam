@@ -193,10 +193,16 @@ impl ImplementationsInterface {
             can_run_on,
         } = implementations;
 
+        // Allow usage of the deprecated fields to maintain backwards
+        // compatibility.
+        #[allow(deprecated)]
         ImplementationsInterface {
             gleam: *gleam,
             externals_used: *externals_used,
             can_run_on: *can_run_on,
+
+            // These are deprecated and are maintained for backwards
+            // compatibility.
             uses_erlang_externals: externals_used.contains(Target::Erlang),
             uses_javascript_externals: externals_used.contains(Target::JavaScript),
             can_run_on_erlang: can_run_on.contains(Target::Erlang),
