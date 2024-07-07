@@ -53,6 +53,7 @@ use vec1::Vec1;
     Copy,
     PartialEq,
     Eq,
+    Hash,
 )]
 #[strum(serialize_all = "lowercase")]
 pub enum Target {

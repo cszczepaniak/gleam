@@ -35,7 +35,7 @@ use camino::Utf8PathBuf;
 use ecow::EcoString;
 use itertools::Itertools;
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     sync::{Arc, OnceLock},
 };
 use vec1::Vec1;
@@ -349,8 +349,7 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
 
         let definition = FunctionDefinition {
             has_body: true,
-            has_erlang_external: false,
-            has_javascript_external: false,
+            external_targets: HashSet::new(),
         };
         let mut expr_typer = ExprTyper::new(environment, definition, &mut self.errors);
         let typed_expr = expr_typer.infer_const(&annotation, *value);
@@ -452,8 +451,7 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
         let has_body = !body.first().is_placeholder();
         let definition = FunctionDefinition {
             has_body,
-            has_erlang_external: f.has_external_for(Target::Erlang),
-            has_javascript_external: f.has_external_for(Target::JavaScript),
+            external_targets: f.external_targets().collect(),
         };
 
         let typed_args = arguments

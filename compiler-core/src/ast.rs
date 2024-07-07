@@ -508,6 +508,10 @@ impl<T, E> Function<T, E> {
     pub fn has_external_for(&self, target: Target) -> bool {
         self.externals.iter().any(|e| e.target == target)
     }
+
+    pub fn external_targets<'a>(&'a self) -> impl Iterator<Item = Target> + 'a {
+        self.externals.iter().map(|e| e.target.clone())
+    }
 }
 
 pub type UntypedImport = Import<()>;

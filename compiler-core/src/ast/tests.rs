@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::sync::Arc;
 
 use camino::Utf8PathBuf;
@@ -145,8 +146,7 @@ fn compile_expression(src: &str) -> TypedStatement {
         &mut environment,
         FunctionDefinition {
             has_body: true,
-            has_erlang_external: false,
-            has_javascript_external: false,
+            external_targets: HashSet::new(),
         },
         errors,
     )
