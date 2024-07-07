@@ -3141,45 +3141,30 @@ where
     ) -> Result<u32, ParseError> {
         let (_, name, _) = self.expect_name()?;
 
-        match name.as_str() {
-            "erlang" => {
-                let _ = self.expect_one(&Token::Comma)?;
-                let (_, module, _) = self.expect_string()?;
-                let _ = self.expect_one(&Token::Comma)?;
-                let (_, function, _) = self.expect_string()?;
-                let _ = self.maybe_one(&Token::Comma);
-                let (_, end) = self.expect_one(&Token::RightParen)?;
-                if attributes.has_external(Target::Erlang) {
-                    return parse_error(ParseErrorType::DuplicateAttribute, SrcSpan { start, end });
-                }
-                attributes.externals.push(External {
-                    target: Target::Erlang,
-                    module,
-                    function,
-                });
-                Ok(end)
-            }
+        let target = match name.as_str() {
+            "erlang" => Target::Erlang,
+            "javascript" => Target::JavaScript,
+            "go" => Target::Go,
+            _ => return parse_error(ParseErrorType::UnknownAttribute, SrcSpan::new(start, end)),
+        };
 
-            "javascript" => {
-                let _ = self.expect_one(&Token::Comma)?;
-                let (_, module, _) = self.expect_string()?;
-                let _ = self.expect_one(&Token::Comma)?;
-                let (_, function, _) = self.expect_string()?;
-                let _ = self.maybe_one(&Token::Comma);
-                let _ = self.expect_one(&Token::RightParen)?;
-                if attributes.has_external(Target::JavaScript) {
-                    return parse_error(ParseErrorType::DuplicateAttribute, SrcSpan { start, end });
-                }
-                attributes.externals.push(External {
-                    target: Target::JavaScript,
-                    module,
-                    function,
-                });
-                Ok(end)
-            }
-
-            _ => parse_error(ParseErrorType::UnknownAttribute, SrcSpan::new(start, end)),
+        let _ = self.expect_one(&Token::Comma)?;
+        let (_, module, _) = self.expect_string()?;
+        let _ = self.expect_one(&Token::Comma)?;
+        let (_, function, _) = self.expect_string()?;
+        let _ = self.maybe_one(&Token::Comma);
+        let _ = self.expect_one(&Token::RightParen)?;
+        if attributes.has_external(target) {
+            return parse_error(ParseErrorType::DuplicateAttribute, SrcSpan { start, end });
         }
+
+        attributes.externals.push(External {
+            target,
+            module,
+            function,
+        });
+
+        Ok(end)
     }
 
     fn parse_deprecated_attribute(

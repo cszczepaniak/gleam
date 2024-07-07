@@ -181,7 +181,10 @@ fn javascript_only() -> Int
 @external(erlang, "wibble", "wobble")
 pub fn erlang_external_and_javascript_body() -> Int { javascript_only() }
 
-pub fn all_externals() -> Int { erlang_external_and_javascript_body() }
+@external(go, "wibble", "wobble")
+pub fn go_external_and_erlang_body() -> Int { erlang_external_and_javascript_body() }
+
+pub fn all_externals() -> Int { go_external_and_erlang_body() }
 "#,
         [
             (
@@ -194,6 +197,14 @@ pub fn all_externals() -> Int { erlang_external_and_javascript_body() }
             ),
             (
                 "erlang_external_and_javascript_body",
+                Implementations {
+                    gleam: false,
+                    externals_used: [Target::Erlang, Target::JavaScript].into_iter().collect(),
+                    can_run_on: [Target::Erlang, Target::JavaScript].into_iter().collect(),
+                }
+            ),
+            (
+                "go_external_and_erlang_body",
                 Implementations {
                     gleam: false,
                     externals_used: TargetSet::all(),
