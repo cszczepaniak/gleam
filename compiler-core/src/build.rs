@@ -91,10 +91,7 @@ impl FromIterator<Target> for TargetSet {
 impl From<Target> for TargetSet {
     fn from(value: Target) -> Self {
         Self {
-            targets_set: match value {
-                Target::Erlang => 1 << 0,
-                Target::JavaScript => 1 << 1,
-            },
+            targets_set: 1 << value as usize,
         }
     }
 }
