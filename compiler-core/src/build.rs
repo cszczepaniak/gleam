@@ -140,10 +140,8 @@ impl TargetSet {
     }
 
     pub fn retain<F: Fn(Target) -> bool>(&mut self, f: F) {
-        for target in Target::iter() {
-            if !f(target) {
-                self.remove(target)
-            }
+        for target in Target::iter().filter(|target| !f(*target)) {
+            self.remove(target)
         }
     }
 
