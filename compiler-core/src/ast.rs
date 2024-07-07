@@ -509,7 +509,7 @@ impl<T, E> Function<T, E> {
         self.externals.iter().any(|e| e.target == target)
     }
 
-    pub fn external_targets<'a>(&'a self) -> TargetSet {
+    pub fn external_targets(&self) -> TargetSet {
         self.externals.iter().map(|e| e.target.clone()).collect()
     }
 }
