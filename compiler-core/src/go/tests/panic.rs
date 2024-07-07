@@ -4,7 +4,7 @@ use crate::assert_go;
 fn bare() {
     assert_go!(
         r#"
-fn go() {
+fn a() {
   panic
 }
 "#,

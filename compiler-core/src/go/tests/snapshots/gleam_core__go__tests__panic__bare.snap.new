@@ -1,0 +1,10 @@
+---
+source: compiler-core/src/go/tests/panic.rs
+assertion_line: 5
+expression: "\nfn go() {\n  panic\n}\n"
+---
+package thepackage
+
+func a() {
+	panic("panic expression evaluated")
+}
