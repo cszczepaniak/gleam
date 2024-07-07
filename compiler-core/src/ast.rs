@@ -510,7 +510,7 @@ impl<T, E> Function<T, E> {
     }
 
     pub fn external_targets(&self) -> TargetSet {
-        self.externals.iter().map(|e| e.target.clone()).collect()
+        self.externals.iter().map(|e| e.target).collect()
     }
 }
 

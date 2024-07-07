@@ -905,7 +905,6 @@ impl<'a, 'b> ExprTyper<'a, 'b> {
             | ValueConstructorVariant::LocalConstant { .. } => return Ok(()),
         };
 
-        dbg!(self.implementations, variant_implementations);
         self.implementations
             .update_from_use(variant_implementations, &self.current_function_definition);
 
