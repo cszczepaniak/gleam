@@ -3153,7 +3153,7 @@ where
         let _ = self.expect_one(&Token::Comma)?;
         let (_, function, _) = self.expect_string()?;
         let _ = self.maybe_one(&Token::Comma);
-        let _ = self.expect_one(&Token::RightParen)?;
+        let (_, end) = self.expect_one(&Token::RightParen)?;
         if attributes.has_external(target) {
             return parse_error(ParseErrorType::DuplicateAttribute, SrcSpan { start, end });
         }
