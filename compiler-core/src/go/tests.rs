@@ -8,30 +8,30 @@ use crate::{
 };
 use camino::{Utf8Path, Utf8PathBuf};
 
-mod assignments;
-mod bit_arrays;
-mod blocks;
-mod bools;
-mod case;
-mod case_clause_guards;
-mod consts;
-mod custom_types;
-mod externals;
-mod functions;
-mod generics;
-mod lists;
-mod modules;
-mod numbers;
+// mod assignments;
+// mod bit_arrays;
+// mod blocks;
+// mod bools;
+// mod case;
+// mod case_clause_guards;
+// mod consts;
+// mod custom_types;
+// mod externals;
+// mod functions;
+// mod generics;
+// mod lists;
+// mod modules;
+// mod numbers;
 mod panic;
-mod prelude;
-mod records;
-mod recursion;
-mod results;
-mod strings;
-mod todo;
-mod tuples;
-mod type_alias;
-mod use_;
+// mod prelude;
+// mod records;
+// mod recursion;
+// mod results;
+// mod strings;
+// mod todo;
+// mod tuples;
+// mod type_alias;
+// mod use_;
 
 pub static CURRENT_PACKAGE: &str = "thepackage";
 
@@ -146,7 +146,7 @@ pub fn compile(src: &str, deps: Vec<(&str, &str, &str)>) -> TypedModule {
     .expect("should successfully infer")
 }
 
-pub fn compile_js(src: &str, deps: Vec<(&str, &str, &str)>) -> String {
+pub fn compile_go(src: &str, deps: Vec<(&str, &str, &str)>) -> String {
     let ast = compile(src, deps);
     let line_numbers = LineNumbers::new(src);
     module(
