@@ -10,7 +10,7 @@ use crate::{
         UntypedExprBitArraySegment, UntypedMultiPattern, UntypedStatement, Use, UseAssignment,
         USE_ASSIGNMENT_VARIABLE,
     },
-    build::Target,
+    build::{Target, TargetSet},
     exhaustiveness,
 };
 use id_arena::Arena;
@@ -20,7 +20,7 @@ use vec1::Vec1;
 
 #[derive(Clone, Copy, Debug, Eq, PartialOrd, Ord, PartialEq, Serialize)]
 pub struct Implementations {
-    /// Wether the function has a pure-gleam implementation.
+    /// Whether the function has a pure-gleam implementation.
     ///
     /// It's important to notice that, even if all individual targets are
     /// supported, it would not be the same as being pure Gleam.
@@ -36,24 +36,18 @@ pub struct Implementations {
     /// is added - say a WASM target - `func` wouldn't support it! On the other
     /// hand, a pure Gleam function will support all future targets.
     pub gleam: bool,
-    pub can_run_on_erlang: bool,
-    pub can_run_on_javascript: bool,
-    /// Wether the function has an implementation that uses external erlang
-    /// code.
-    pub uses_erlang_externals: bool,
-    /// Wether the function has an implementation that uses external javascript
-    /// code.
-    pub uses_javascript_externals: bool,
+    pub can_run_on: TargetSet,
+    /// The set of extenral targets for which this function has an
+    /// implementation.
+    pub externals_used: TargetSet,
 }
 
 impl Implementations {
     pub fn supporting_all() -> Self {
         Self {
             gleam: true,
-            can_run_on_erlang: true,
-            can_run_on_javascript: true,
-            uses_javascript_externals: false,
-            uses_erlang_externals: false,
+            can_run_on: TargetSet::all(),
+            externals_used: TargetSet::new(),
         }
     }
 }
@@ -66,18 +60,16 @@ impl Implementations {
 pub struct FunctionDefinition {
     /// The function has { ... } after the function head
     pub has_body: bool,
-    /// The function has @external(erlang, "...", "...")
-    pub has_erlang_external: bool,
-    /// The function has @external(JavaScript, "...", "...")
-    pub has_javascript_external: bool,
+    /// The list of targets for which the function has an external definition.
+    /// Example: the function has @external(erlang, "...", "...") and
+    /// @external(javascript, "...", "..."); this will have Target::Erlang and
+    /// Target::JavaScript
+    pub external_targets: TargetSet,
 }
 
 impl FunctionDefinition {
     pub fn has_external_for_target(&self, target: Target) -> bool {
-        match target {
-            Target::Erlang => self.has_erlang_external,
-            Target::JavaScript => self.has_javascript_external,
-        }
+        self.external_targets.contains(target)
     }
 }
 
@@ -90,31 +82,28 @@ impl Implementations {
         implementations: &Implementations,
         current_function_definition: &FunctionDefinition,
     ) {
-        // With this pattern matching we won't forget to deal with new targets
-        // when those are added :)
         let Implementations {
             gleam,
-            uses_erlang_externals: other_uses_erlang_externals,
-            uses_javascript_externals: other_uses_javascript_externals,
-            can_run_on_erlang: other_can_run_on_erlang,
-            can_run_on_javascript: other_can_run_on_javascript,
+            externals_used: other_externals_used,
+            can_run_on: other_can_run_on,
         } = implementations;
-        let FunctionDefinition {
-            has_body: _,
-            has_erlang_external,
-            has_javascript_external,
-        } = current_function_definition;
 
         // If a pure-Gleam function uses a function that doesn't have a pure
         // Gleam implementation, then it's no longer pure-Gleam.
         self.gleam = self.gleam && *gleam;
 
         // A function can run on a target if the code that it uses can run on on
-        // the same target,
-        self.can_run_on_erlang = *has_erlang_external
-            || (self.can_run_on_erlang && (*gleam || *other_can_run_on_erlang));
-        self.can_run_on_javascript = *has_javascript_external
-            || (self.can_run_on_javascript && (*gleam || *other_can_run_on_javascript));
+        // the same target.
+        self.can_run_on
+            .retain(|target| *gleam || other_can_run_on.contains(target));
+
+        // The current function definition's external defitinions override what
+        // we just set; if a function's body references target-specific code for
+        // target A but the function has an external spec for target B, it
+        // doesn't matter that there's target-A-specific code in the body
+        // because for target B the whole function body will be elided.
+        self.can_run_on
+            .merge(current_function_definition.external_targets);
 
         // If a function uses a function that relies on external code (be it
         // javascript or erlang) then it's considered as using external code as
@@ -134,9 +123,7 @@ impl Implementations {
         // `Implementations { gleam: true, uses_erlang_externals: true, uses_javascript_externals: false}`.
         // They have a pure gleam implementation and an erlang specific external
         // implementation.
-        self.uses_erlang_externals = self.uses_erlang_externals || *other_uses_erlang_externals;
-        self.uses_javascript_externals =
-            self.uses_javascript_externals || *other_uses_javascript_externals;
+        self.externals_used.merge(*other_externals_used);
     }
 
     /// Returns true if the current target is supported by the given
@@ -144,11 +131,7 @@ impl Implementations {
     /// If something has a pure gleam implementation then it supports all
     /// targets automatically.
     pub fn supports(&self, target: Target) -> bool {
-        self.gleam
-            || match target {
-                Target::Erlang => self.can_run_on_erlang,
-                Target::JavaScript => self.can_run_on_javascript,
-            }
+        self.gleam || self.can_run_on.contains(target)
     }
 }
 
@@ -215,15 +198,19 @@ impl<'a, 'b> ExprTyper<'a, 'b> {
     ) -> Self {
         let mut hydrator = Hydrator::new();
 
+        let can_run_on = if definition.has_body {
+            TargetSet::all()
+        } else {
+            definition.external_targets
+        };
+
         let implementations = Implementations {
             // We start assuming the function is pure Gleam and narrow it down
             // if we run into functions/constants that have only external
             // implementations for some of the targets.
             gleam: definition.has_body,
-            can_run_on_erlang: definition.has_body || definition.has_erlang_external,
-            can_run_on_javascript: definition.has_body || definition.has_javascript_external,
-            uses_erlang_externals: definition.has_erlang_external,
-            uses_javascript_externals: definition.has_javascript_external,
+            can_run_on,
+            externals_used: definition.external_targets,
         };
 
         hydrator.permit_holes(true);

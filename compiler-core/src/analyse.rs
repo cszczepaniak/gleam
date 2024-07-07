@@ -10,7 +10,7 @@ use crate::{
         TypeAstFn, TypeAstHole, TypeAstTuple, TypeAstVar, TypedDefinition, TypedExpr,
         TypedFunction, TypedModule, UntypedArg, UntypedFunction, UntypedModule, UntypedStatement,
     },
-    build::{Origin, Outcome, Target},
+    build::{Origin, Outcome, Target, TargetSet},
     call_graph::{into_dependency_order, CallGraphNode},
     config::PackageConfig,
     dep_tree,
@@ -349,8 +349,7 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
 
         let definition = FunctionDefinition {
             has_body: true,
-            has_erlang_external: false,
-            has_javascript_external: false,
+            external_targets: TargetSet::new(),
         };
         let mut expr_typer = ExprTyper::new(environment, definition, &mut self.errors);
         let typed_expr = expr_typer.infer_const(&annotation, *value);
@@ -452,8 +451,7 @@ impl<'a, A> ModuleAnalyzer<'a, A> {
         let has_body = !body.first().is_placeholder();
         let definition = FunctionDefinition {
             has_body,
-            has_erlang_external: f.has_external_for(Target::Erlang),
-            has_javascript_external: f.has_external_for(Target::JavaScript),
+            external_targets: f.external_targets(),
         };
 
         let typed_args = arguments

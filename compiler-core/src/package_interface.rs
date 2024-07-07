@@ -9,6 +9,7 @@ mod tests;
 
 use crate::{
     ast::{CustomType, Definition, Function, ModuleConstant, Publicity, TypeAlias},
+    build::Target,
     io::ordered_map,
     type_::{expression::Implementations, Deprecation, Type, TypeVar},
 };
@@ -256,19 +257,18 @@ impl ImplementationsInterface {
         // in the `Implementations` struct.
         let Implementations {
             gleam,
-            uses_erlang_externals,
-            uses_javascript_externals,
-
-            can_run_on_erlang,
-            can_run_on_javascript,
+            externals_used,
+            can_run_on,
         } = implementations;
 
         ImplementationsInterface {
             gleam: *gleam,
-            uses_erlang_externals: *uses_erlang_externals,
-            uses_javascript_externals: *uses_javascript_externals,
-            can_run_on_erlang: *can_run_on_erlang,
-            can_run_on_javascript: *can_run_on_javascript,
+            // TODO this is serialized and I don't know why yet, so I'm scared
+            // to change the format.
+            uses_erlang_externals: externals_used.contains(Target::Erlang),
+            uses_javascript_externals: externals_used.contains(Target::JavaScript),
+            can_run_on_erlang: can_run_on.contains(Target::Erlang),
+            can_run_on_javascript: can_run_on.contains(Target::JavaScript),
         }
     }
 }

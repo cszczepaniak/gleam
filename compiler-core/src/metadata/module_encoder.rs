@@ -5,6 +5,7 @@ use crate::{
         Constant, Publicity, SrcSpan, TypedConstant, TypedConstantBitArraySegment,
         TypedConstantBitArraySegmentOption,
     },
+    build::Target,
     schema_capnp::{self as schema, *},
     type_::{
         self, expression::Implementations, AccessorsMap, Deprecation, FieldMap, RecordAccessor,
@@ -533,9 +534,11 @@ impl<'a> ModuleEncoder<'a> {
         implementations: Implementations,
     ) {
         builder.set_gleam(implementations.gleam);
-        builder.set_uses_erlang_externals(implementations.uses_erlang_externals);
-        builder.set_uses_javascript_externals(implementations.uses_javascript_externals);
-        builder.set_can_run_on_erlang(implementations.can_run_on_erlang);
-        builder.set_can_run_on_javascript(implementations.can_run_on_javascript);
+        builder.set_uses_erlang_externals(implementations.externals_used.contains(Target::Erlang));
+        builder.set_uses_javascript_externals(
+            implementations.externals_used.contains(Target::JavaScript),
+        );
+        builder.set_can_run_on_erlang(implementations.can_run_on.contains(Target::Erlang));
+        builder.set_can_run_on_javascript(implementations.can_run_on.contains(Target::JavaScript));
     }
 }

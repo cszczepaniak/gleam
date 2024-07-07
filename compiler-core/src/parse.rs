@@ -65,7 +65,7 @@ use crate::ast::{
     UntypedDefinition, UntypedExpr, UntypedModule, UntypedPattern, UntypedRecordUpdateArg,
     UntypedStatement, Use, UseAssignment, CAPTURE_VARIABLE,
 };
-use crate::build::Target;
+use crate::build::{Target, TargetSet};
 use crate::parse::extra::ModuleExtra;
 use crate::type_::expression::Implementations;
 use crate::type_::Deprecation;
@@ -1712,10 +1712,8 @@ where
             externals: attributes.take_externals(),
             implementations: Implementations {
                 gleam: true,
-                can_run_on_erlang: true,
-                can_run_on_javascript: true,
-                uses_erlang_externals: false,
-                uses_javascript_externals: false,
+                can_run_on: TargetSet::all(),
+                externals_used: TargetSet::new(),
             },
         })))
     }
@@ -2357,10 +2355,8 @@ where
                 deprecation: attributes.deprecated.clone(),
                 implementations: Implementations {
                     gleam: true,
-                    can_run_on_erlang: true,
-                    can_run_on_javascript: true,
-                    uses_erlang_externals: false,
-                    uses_javascript_externals: false,
+                    can_run_on: TargetSet::all(),
+                    externals_used: TargetSet::new(),
                 },
             })))
         } else {

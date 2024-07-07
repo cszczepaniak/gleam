@@ -12,7 +12,7 @@ pub use self::untyped::{UntypedExpr, Use};
 pub use self::constant::{Constant, TypedConstant, UntypedConstant};
 
 use crate::analyse::Inferred;
-use crate::build::{Located, Target};
+use crate::build::{Located, Target, TargetSet};
 use crate::type_::expression::Implementations;
 use crate::type_::{
     self, Deprecation, ModuleValueConstructor, PatternConstructor, Type, ValueConstructor,
@@ -507,6 +507,10 @@ impl<T, E> Function<T, E> {
 
     pub fn has_external_for(&self, target: Target) -> bool {
         self.externals.iter().any(|e| e.target == target)
+    }
+
+    pub fn external_targets(&self) -> TargetSet {
+        self.externals.iter().map(|e| e.target).collect()
     }
 }
 
