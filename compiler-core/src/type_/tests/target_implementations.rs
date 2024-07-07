@@ -103,6 +103,7 @@ pub fn externals_only_function() {
         r#"
 @external(erlang, "wibble", "wobble")
 @external(javascript, "wibble", "wobble")
+@external(go, "wibble", "wobble")
 pub fn all_externals_1() -> Int
 
 pub fn all_externals_2() { all_externals_1() * 2 }
@@ -138,8 +139,11 @@ pub fn javascript_external_and_pure_body() -> Int { 1 + 1 }
 @external(erlang, "wibble", "wobble")
 pub fn erlang_external_and_pure_body() -> Int { 1 + 1 }
 
+@external(go, "wibble", "wobble")
+pub fn go_external_and_pure_body() -> Int { 1 + 1 }
+
 pub fn pure_gleam() {
-  javascript_external_and_pure_body() + erlang_external_and_pure_body()
+  javascript_external_and_pure_body() + erlang_external_and_pure_body() + go_external_and_pure_body()
 }
 "#,
         [
@@ -148,6 +152,14 @@ pub fn pure_gleam() {
                 Implementations {
                     gleam: true,
                     externals_used: [Target::Erlang].into_iter().collect(),
+                    can_run_on: TargetSet::all(),
+                }
+            ),
+            (
+                "go_external_and_pure_body",
+                Implementations {
+                    gleam: true,
+                    externals_used: [Target::Go].into_iter().collect(),
                     can_run_on: TargetSet::all(),
                 }
             ),
@@ -233,17 +245,9 @@ pub fn erlang_only() -> Int
 @external(javascript, "wibble", "wobble")
 pub fn javascript_external_and_erlang_body() -> Int { erlang_only() }
 
-pub fn all_externals() -> Int { javascript_external_and_erlang_body() }
+pub fn javascript_and_erlang() -> Int { javascript_external_and_erlang_body() }
 "#,
         [
-            (
-                "all_externals",
-                Implementations {
-                    gleam: false,
-                    externals_used: TargetSet::all(),
-                    can_run_on: TargetSet::all(),
-                }
-            ),
             (
                 "erlang_only",
                 Implementations {
@@ -253,11 +257,19 @@ pub fn all_externals() -> Int { javascript_external_and_erlang_body() }
                 }
             ),
             (
+                "javascript_and_erlang",
+                Implementations {
+                    gleam: false,
+                    externals_used: [Target::Erlang, Target::JavaScript].into_iter().collect(),
+                    can_run_on: [Target::Erlang, Target::JavaScript].into_iter().collect(),
+                }
+            ),
+            (
                 "javascript_external_and_erlang_body",
                 Implementations {
                     gleam: false,
-                    externals_used: TargetSet::all(),
-                    can_run_on: TargetSet::all(),
+                    externals_used: [Target::Erlang, Target::JavaScript].into_iter().collect(),
+                    can_run_on: [Target::Erlang, Target::JavaScript].into_iter().collect(),
                 }
             )
         ],
