@@ -307,7 +307,7 @@ where
                 self.perform_erlang_codegen(modules, app_file.as_ref())
             }
             TargetCodegenConfiguration::Go => {
-                unimplemented!("Go target not yet implemented")
+                panic!("Go target not yet implemented")
             }
         }
     }
