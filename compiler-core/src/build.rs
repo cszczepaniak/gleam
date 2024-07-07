@@ -65,6 +65,28 @@ pub enum Target {
     JavaScript,
 }
 
+impl Target {
+    pub fn variant_strings() -> Vec<EcoString> {
+        Self::VARIANTS.iter().map(|s| (*s).into()).collect()
+    }
+
+    /// Returns `true` if the target is [`JavaScript`].
+    ///
+    /// [`JavaScript`]: Target::JavaScript
+    #[must_use]
+    pub fn is_javascript(&self) -> bool {
+        matches!(self, Self::JavaScript)
+    }
+
+    /// Returns `true` if the target is [`Erlang`].
+    ///
+    /// [`Erlang`]: Target::Erlang
+    #[must_use]
+    pub fn is_erlang(&self) -> bool {
+        matches!(self, Self::Erlang)
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialOrd, Ord, PartialEq, Serialize)]
 pub struct TargetSet {
     // target_set is a bitfield containing a 1 when a target is present and 0
@@ -135,28 +157,6 @@ impl TargetSet {
     pub fn contains(&self, target: Target) -> bool {
         let other: TargetSet = target.into();
         self.targets_set & other.targets_set != 0
-    }
-}
-
-impl Target {
-    pub fn variant_strings() -> Vec<EcoString> {
-        Self::VARIANTS.iter().map(|s| (*s).into()).collect()
-    }
-
-    /// Returns `true` if the target is [`JavaScript`].
-    ///
-    /// [`JavaScript`]: Target::JavaScript
-    #[must_use]
-    pub fn is_javascript(&self) -> bool {
-        matches!(self, Self::JavaScript)
-    }
-
-    /// Returns `true` if the target is [`Erlang`].
-    ///
-    /// [`Erlang`]: Target::Erlang
-    #[must_use]
-    pub fn is_erlang(&self) -> bool {
-        matches!(self, Self::Erlang)
     }
 }
 
