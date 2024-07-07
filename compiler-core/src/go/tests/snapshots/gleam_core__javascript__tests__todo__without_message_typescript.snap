@@ -1,5 +1,0 @@
----
-source: compiler-core/src/javascript/tests/todo.rs
-expression: "\npub fn go() {\n    todo\n}\n"
----
-export function go(): any;
