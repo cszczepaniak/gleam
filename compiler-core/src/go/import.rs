@@ -4,7 +4,7 @@ use itertools::Itertools;
 
 use crate::{
     docvec,
-    javascript::{JavaScriptCodegenTarget, INDENT},
+    go::{GoCodegenTarget, INDENT},
     pretty::{break_, concat, join, line, Document, Documentable},
 };
 
@@ -40,7 +40,7 @@ impl<'a> Imports<'a> {
         import.unqualified.extend(unqualified_imports)
     }
 
-    pub fn into_doc(self, codegen_target: JavaScriptCodegenTarget) -> Document<'a> {
+    pub fn into_doc(self, codegen_target: GoCodegenTarget) -> Document<'a> {
         let imports = concat(
             self.imports
                 .into_values()
@@ -90,13 +90,14 @@ impl<'a> Import<'a> {
         }
     }
 
-    pub fn into_doc(self, codegen_target: JavaScriptCodegenTarget) -> Document<'a> {
+    pub fn into_doc(self, _codegen_target: GoCodegenTarget) -> Document<'a> {
         let path = Document::String(self.path.clone());
-        let import_modifier = if codegen_target == JavaScriptCodegenTarget::TypeScriptDeclarations {
-            "type "
-        } else {
-            ""
-        };
+        // let import_modifier = if codegen_target == JavaScriptCodegenTarget::TypeScriptDeclarations {
+        //     "type "
+        // } else {
+        //     ""
+        // };
+        let import_modifier = "";
         let alias_imports = concat(self.aliases.into_iter().sorted().map(|alias| {
             docvec![
                 "import ",
@@ -219,7 +220,7 @@ fn into_doc() {
 
     assert_eq!(
         line()
-            .append(imports.into_doc(JavaScriptCodegenTarget::JavaScript))
+            .append(imports.into_doc(GoCodegenTarget::Go))
             .to_pretty_string(40),
         r#"
 import * as wibble from "./multiple/times";

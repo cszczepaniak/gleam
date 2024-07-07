@@ -30,8 +30,9 @@ pub const PRELUDE_TS_DEF: &str = include_str!("../templates/prelude.d.mts");
 pub type Output<'a> = Result<Document<'a>, Error>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum JavaScriptCodegenTarget {
-    JavaScript,
+pub enum GoCodegenTarget {
+    Go,
+    // TODO get rid of this?
     TypeScriptDeclarations,
 }
 
@@ -180,12 +181,12 @@ impl<'a> Generator<'a> {
         } else if statements.is_empty() {
             Ok(docvec![
                 type_reference,
-                imports.into_doc(JavaScriptCodegenTarget::JavaScript)
+                imports.into_doc(GoCodegenTarget::Go)
             ])
         } else {
             Ok(docvec![
                 type_reference,
-                imports.into_doc(JavaScriptCodegenTarget::JavaScript),
+                imports.into_doc(GoCodegenTarget::Go),
                 line(),
                 statements,
                 line()
@@ -227,13 +228,13 @@ impl<'a> Generator<'a> {
             Definition::Function(function) => {
                 // If there's an external JavaScript implementation then it will be imported,
                 // so we don't need to generate a function definition.
-                if function.has_external_for(Target::JavaScript) {
+                if function.has_external_for(Target::Go) {
                     return None;
                 }
 
                 // If the function does not support JavaScript then we don't need to generate
                 // a function definition.
-                if !function.implementations.supports(Target::JavaScript) {
+                if !function.implementations.supports(Target::Go) {
                     return None;
                 }
 
@@ -354,10 +355,10 @@ impl<'a> Generator<'a> {
                     publicity,
                     externals,
                     ..
-                }) if externals.iter().any(|e| e.target == Target::JavaScript) => {
+                }) if externals.iter().any(|e| e.target == Target::Go) => {
                     let external_javascript = externals
                         .iter()
-                        .find(|e| e.target == Target::JavaScript)
+                        .find(|e| e.target == Target::Go)
                         .expect("we know this is Some because we just checked");
                     self.register_external_function(
                         &mut imports,
@@ -569,7 +570,7 @@ pub fn module(
 ) -> Result<String, crate::Error> {
     let document = Generator::new(line_numbers, module, target_support, typescript)
         .compile()
-        .map_err(|error| crate::Error::JavaScript {
+        .map_err(|error| crate::Error::Go {
             path: path.to_path_buf(),
             src: src.clone(),
             error,
@@ -584,7 +585,7 @@ pub fn ts_declaration(
 ) -> Result<String, crate::Error> {
     let document = typescript::TypeScriptGenerator::new(module)
         .compile()
-        .map_err(|error| crate::Error::JavaScript {
+        .map_err(|error| crate::Error::Go {
             path: path.to_path_buf(),
             src: src.clone(),
             error,

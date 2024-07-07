@@ -207,7 +207,7 @@ impl<'module> Generator<'module> {
                 panic!("invalid expressions should not reach code generation")
             }
         }?;
-        Ok(if expression.handles_own_return() {
+        Ok(if expression.handles_own_return_go() {
             document
         } else {
             self.wrap_return(document)
@@ -327,7 +327,7 @@ impl<'module> Generator<'module> {
     /// being an operator or a function literal.
     pub fn child_expression<'a>(&mut self, expression: &'a TypedExpr) -> Output<'a> {
         match expression {
-            TypedExpr::BinOp { name, .. } if name.is_operator_to_wrap() => {}
+            TypedExpr::BinOp { name, .. } if name.is_operator_to_wrap_go() => {}
             TypedExpr::Fn { .. } => {}
 
             _ => return self.wrap_expression(expression),
@@ -1490,7 +1490,7 @@ fn construct_record<'a>(
 }
 
 impl TypedExpr {
-    fn handles_own_return(&self) -> bool {
+    fn handles_own_return_go(&self) -> bool {
         match self {
             TypedExpr::Todo { .. }
             | TypedExpr::Call { .. }
@@ -1520,7 +1520,7 @@ impl TypedExpr {
 }
 
 impl BinOp {
-    fn is_operator_to_wrap(&self) -> bool {
+    fn is_operator_to_wrap_go(&self) -> bool {
         match self {
             BinOp::And
             | BinOp::Or

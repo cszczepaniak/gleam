@@ -2,7 +2,7 @@ use crate::{
     analyse::TargetSupport,
     build::{Origin, Target},
     config::PackageConfig,
-    javascript::*,
+    go::*,
     uid::UniqueIdGenerator,
     warning::{TypeWarningEmitter, WarningEmitter},
 };
@@ -36,19 +36,18 @@ mod use_;
 pub static CURRENT_PACKAGE: &str = "thepackage";
 
 #[macro_export]
-macro_rules! assert_js_with_multiple_imports {
+macro_rules! assert_go_with_multiple_imports {
     ($(($name:literal, $module_src:literal)),+; $src:literal) => {
         let output =
-            $crate::javascript::tests::compile_js($src, vec![$((CURRENT_PACKAGE, $name, $module_src)),*]);
+            $crate::go::tests::compile_go($src, vec![$((CURRENT_PACKAGE, $name, $module_src)),*]);
         insta::assert_snapshot!(insta::internals::AutoName, output, $src);
     };
 }
 
 #[macro_export]
-macro_rules! assert_js {
+macro_rules! assert_go {
     (($dep_package:expr, $dep_name:expr, $dep_src:expr), $src:expr $(,)?) => {{
-        let output =
-            $crate::javascript::tests::compile_js($src, vec![($dep_package, $dep_name, $dep_src)]);
+        let output = $crate::go::tests::compile_go($src, vec![($dep_package, $dep_name, $dep_src)]);
         insta::assert_snapshot!(insta::internals::AutoName, output, $src);
     }};
 
@@ -59,26 +58,25 @@ macro_rules! assert_js {
     }};
 
     ($src:expr $(,)?) => {{
-        let output = $crate::javascript::tests::compile_js($src, vec![]);
+        let output = $crate::go::tests::compile_go($src, vec![]);
         insta::assert_snapshot!(insta::internals::AutoName, output, $src);
     }};
 
     ($src:expr, $js:expr $(,)?) => {{
-        let output = $crate::javascript::tests::compile_js($src, vec![]);
+        let output = $crate::go::tests::compile_go($src, vec![]);
         assert_eq!(($src, output), ($src, $js.to_string()));
     }};
 }
 
 #[macro_export]
-macro_rules! assert_ts_def {
+macro_rules! assert_ts_def_go {
     (($dep_package:expr, $dep_name:expr, $dep_src:expr), $src:expr $(,)?) => {{
-        let output =
-            $crate::javascript::tests::compile_ts($src, vec![($dep_package, $dep_name, $dep_src)]);
+        let output = $crate::go::tests::compile_go($src, vec![($dep_package, $dep_name, $dep_src)]);
         insta::assert_snapshot!(insta::internals::AutoName, output, $src);
     }};
 
     ($src:expr $(,)?) => {{
-        let output = $crate::javascript::tests::compile_ts($src, vec![]);
+        let output = $crate::go::tests::compile_go($src, vec![]);
         insta::assert_snapshot!(insta::internals::AutoName, output, $src);
     }};
 }

@@ -1,6 +1,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 use crate::build::{Outcome, Runtime, Target};
 use crate::diagnostic::{Diagnostic, ExtraLabel, Label, Location};
+use crate::go;
 use crate::type_::error::RecordVariants;
 use crate::type_::error::{MissingAnnotation, UnknownTypeHint};
 use crate::type_::{error::PatternMatchKind, FieldAccessUsage};
@@ -196,6 +197,13 @@ file_names.iter().map(|x| x.as_str()).join(", "))]
         path: Utf8PathBuf,
         src: EcoString,
         error: javascript::Error,
+    },
+
+    #[error("go codegen failed")]
+    Go {
+        path: Utf8PathBuf,
+        src: EcoString,
+        error: go::Error,
     },
 
     #[error("Invalid runtime for {target} target: {invalid_runtime}")]
@@ -3129,6 +3137,24 @@ Fix the warnings and try again."
                 javascript::Error::Unsupported { feature, location } => vec![Diagnostic {
                     title: "Unsupported feature for compilation target".into(),
                     text: format!("{feature} is not supported for JavaScript compilation."),
+                    hint: None,
+                    level: Level::Error,
+                    location: Some(Location {
+                        label: Label {
+                            text: None,
+                            span: *location,
+                        },
+                        path: path.clone(),
+                        src: src.clone(),
+                        extra_labels: vec![],
+                    }),
+                }],
+            },
+
+            Error::Go { src, path, error } => match error {
+                go::Error::Unsupported { feature, location } => vec![Diagnostic {
+                    title: "Unsupported feature for compilation target".into(),
+                    text: format!("{feature} is not supported for Go compilation."),
                     hint: None,
                     level: Level::Error,
                     location: Some(Location {
