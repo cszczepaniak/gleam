@@ -38,7 +38,7 @@ use std::fmt::Debug;
 use std::sync::Arc;
 use std::time::SystemTime;
 use std::{collections::HashMap, ffi::OsString, fs::DirEntry, iter::Peekable, process};
-use strum::{Display, EnumIter, EnumString, EnumVariantNames, VariantNames};
+use strum::{Display, EnumIter, EnumString, EnumVariantNames, IntoEnumIterator, VariantNames};
 use vec1::Vec1;
 
 #[derive(
@@ -121,10 +121,7 @@ impl TargetSet {
     }
 
     pub fn all() -> Self {
-        let mut res = Self::new();
-        res.insert(Target::Erlang);
-        res.insert(Target::JavaScript);
-        res
+        Target::iter().collect()
     }
 
     pub fn insert(&mut self, target: Target) {
@@ -143,7 +140,7 @@ impl TargetSet {
     }
 
     pub fn retain<F: Fn(Target) -> bool>(&mut self, f: F) {
-        for target in [Target::Erlang, Target::JavaScript] {
+        for target in Target::iter() {
             if !f(target) {
                 self.remove(target)
             }
