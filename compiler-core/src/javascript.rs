@@ -227,7 +227,7 @@ impl<'a> Generator<'a> {
             Definition::Function(function) => {
                 // If there's an external JavaScript implementation then it will be imported,
                 // so we don't need to generate a function definition.
-                if function.external_javascript.is_some() {
+                if function.has_external_for(Target::JavaScript) {
                     return None;
                 }
 
@@ -352,15 +352,19 @@ impl<'a> Generator<'a> {
                 Definition::Function(Function {
                     name,
                     publicity,
-                    external_javascript: Some((module, function)),
+                    externals,
                     ..
-                }) => {
+                }) if externals.iter().any(|e| e.target == Target::JavaScript) => {
+                    let external_javascript = externals
+                        .iter()
+                        .find(|e| e.target == Target::JavaScript)
+                        .expect("we know this is Some because we just checked");
                     self.register_external_function(
                         &mut imports,
                         *publicity,
                         name,
-                        module,
-                        function,
+                        &external_javascript.module,
+                        &external_javascript.function,
                     );
                 }
 

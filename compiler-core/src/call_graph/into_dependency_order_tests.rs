@@ -35,8 +35,7 @@ fn parse_and_order(
             end_position: src.len() as u32,
             return_type: (),
             documentation: None,
-            external_erlang: None,
-            external_javascript: None,
+            externals: vec![],
             implementations: Implementations {
                 gleam: true,
                 uses_erlang_externals: true,

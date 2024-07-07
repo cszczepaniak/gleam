@@ -57,13 +57,13 @@ mod token;
 use crate::analyse::Inferred;
 use crate::ast::{
     Arg, ArgNames, AssignName, Assignment, AssignmentKind, BinOp, BitArrayOption, BitArraySegment,
-    CallArg, Clause, ClauseGuard, Constant, CustomType, Definition, Function, HasLocation, Import,
-    Module, ModuleConstant, Pattern, Publicity, RecordConstructor, RecordConstructorArg,
-    RecordUpdateSpread, SrcSpan, Statement, TargetedDefinition, TodoKind, TypeAlias, TypeAst,
-    TypeAstConstructor, TypeAstFn, TypeAstHole, TypeAstTuple, TypeAstVar, UnqualifiedImport,
-    UntypedArg, UntypedClause, UntypedClauseGuard, UntypedConstant, UntypedDefinition, UntypedExpr,
-    UntypedModule, UntypedPattern, UntypedRecordUpdateArg, UntypedStatement, Use, UseAssignment,
-    CAPTURE_VARIABLE,
+    CallArg, Clause, ClauseGuard, Constant, CustomType, Definition, External, Function,
+    HasLocation, Import, Module, ModuleConstant, Pattern, Publicity, RecordConstructor,
+    RecordConstructorArg, RecordUpdateSpread, SrcSpan, Statement, TargetedDefinition, TodoKind,
+    TypeAlias, TypeAst, TypeAstConstructor, TypeAstFn, TypeAstHole, TypeAstTuple, TypeAstVar,
+    UnqualifiedImport, UntypedArg, UntypedClause, UntypedClauseGuard, UntypedConstant,
+    UntypedDefinition, UntypedExpr, UntypedModule, UntypedPattern, UntypedRecordUpdateArg,
+    UntypedStatement, Use, UseAssignment, CAPTURE_VARIABLE,
 };
 use crate::build::Target;
 use crate::parse::extra::ModuleExtra;
@@ -116,14 +116,21 @@ enum InternalAttribute {
 struct Attributes {
     target: Option<Target>,
     deprecated: Deprecation,
-    external_erlang: Option<(EcoString, EcoString)>,
-    external_javascript: Option<(EcoString, EcoString)>,
+    externals: Vec<External>,
     internal: InternalAttribute,
 }
 
 impl Attributes {
     fn has_function_only(&self) -> bool {
-        self.external_erlang.is_some() || self.external_javascript.is_some()
+        !self.externals.is_empty()
+    }
+
+    fn has_external(&self, target: Target) -> bool {
+        self.externals.iter().any(|v| v.target == target)
+    }
+
+    fn take_externals(&mut self) -> Vec<External> {
+        self.externals.drain(0..).collect()
     }
 }
 
@@ -1702,8 +1709,7 @@ where
             return_type: (),
             return_annotation,
             deprecation: std::mem::take(&mut attributes.deprecated),
-            external_erlang: attributes.external_erlang.take(),
-            external_javascript: attributes.external_javascript.take(),
+            externals: attributes.take_externals(),
             implementations: Implementations {
                 gleam: true,
                 can_run_on_erlang: true,
@@ -3147,10 +3153,14 @@ where
                 let (_, function, _) = self.expect_string()?;
                 let _ = self.maybe_one(&Token::Comma);
                 let (_, end) = self.expect_one(&Token::RightParen)?;
-                if attributes.external_erlang.is_some() {
+                if attributes.has_external(Target::Erlang) {
                     return parse_error(ParseErrorType::DuplicateAttribute, SrcSpan { start, end });
                 }
-                attributes.external_erlang = Some((module, function));
+                attributes.externals.push(External {
+                    target: Target::Erlang,
+                    module,
+                    function,
+                });
                 Ok(end)
             }
 
@@ -3161,10 +3171,14 @@ where
                 let (_, function, _) = self.expect_string()?;
                 let _ = self.maybe_one(&Token::Comma);
                 let _ = self.expect_one(&Token::RightParen)?;
-                if attributes.external_javascript.is_some() {
+                if attributes.has_external(Target::JavaScript) {
                     return parse_error(ParseErrorType::DuplicateAttribute, SrcSpan { start, end });
                 }
-                attributes.external_javascript = Some((module, function));
+                attributes.externals.push(External {
+                    target: Target::JavaScript,
+                    module,
+                    function,
+                });
                 Ok(end)
             }
 

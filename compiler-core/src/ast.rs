@@ -454,6 +454,20 @@ impl Publicity {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// An external function spec.
+///
+/// # Example(s)
+///
+/// ```gleam
+/// @external(erlang, "wibble", "wobble")
+/// ```
+pub struct External {
+    pub target: Target,
+    pub module: EcoString,
+    pub function: EcoString,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 /// A function definition
 ///
 /// # Example(s)
@@ -475,8 +489,7 @@ pub struct Function<T, Expr> {
     pub return_annotation: Option<TypeAst>,
     pub return_type: T,
     pub documentation: Option<EcoString>,
-    pub external_erlang: Option<(EcoString, EcoString)>,
-    pub external_javascript: Option<(EcoString, EcoString)>,
+    pub externals: Vec<External>,
     pub implementations: Implementations,
 }
 
@@ -486,6 +499,14 @@ pub type UntypedFunction = Function<(), UntypedExpr>;
 impl<T, E> Function<T, E> {
     fn full_location(&self) -> SrcSpan {
         SrcSpan::new(self.location.start, self.end_position)
+    }
+
+    pub fn external_for(&self, target: Target) -> Option<&External> {
+        self.externals.iter().find(|e| e.target == target)
+    }
+
+    pub fn has_external_for(&self, target: Target) -> bool {
+        self.externals.iter().any(|e| e.target == target)
     }
 }
 
