@@ -2942,6 +2942,14 @@ pub mod implementations {
     pub fn get_can_run_on_javascript(self) -> bool {
       self.reader.get_bool_field(4)
     }
+    #[inline]
+    pub fn get_externals_used(self) -> u64 {
+      self.reader.get_data_field::<u64>(1)
+    }
+    #[inline]
+    pub fn get_can_run_on(self) -> u64 {
+      self.reader.get_data_field::<u64>(2)
+    }
   }
 
   pub struct Builder<'a> { builder: ::capnp::private::layout::StructBuilder<'a> }
@@ -3032,6 +3040,22 @@ pub mod implementations {
     pub fn set_can_run_on_javascript(&mut self, value: bool)  {
       self.builder.set_bool_field(4, value);
     }
+    #[inline]
+    pub fn get_externals_used(self) -> u64 {
+      self.builder.get_data_field::<u64>(1)
+    }
+    #[inline]
+    pub fn set_externals_used(&mut self, value: u64)  {
+      self.builder.set_data_field::<u64>(1, value);
+    }
+    #[inline]
+    pub fn get_can_run_on(self) -> u64 {
+      self.builder.get_data_field::<u64>(2)
+    }
+    #[inline]
+    pub fn set_can_run_on(&mut self, value: u64)  {
+      self.builder.set_data_field::<u64>(2, value);
+    }
   }
 
   pub struct Pipeline { _typeless: ::capnp::any_pointer::Pipeline }
@@ -3044,7 +3068,7 @@ pub mod implementations {
   }
   mod _private {
     use capnp::private::layout;
-    pub const STRUCT_SIZE: layout::StructSize = layout::StructSize { data: 1, pointers: 0 };
+    pub const STRUCT_SIZE: layout::StructSize = layout::StructSize { data: 3, pointers: 0 };
     pub const TYPE_ID: u64 = 0x9b1d_9ffc_763a_a0df;
   }
 }
