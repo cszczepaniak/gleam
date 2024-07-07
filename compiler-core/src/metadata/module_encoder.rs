@@ -534,11 +534,15 @@ impl<'a> ModuleEncoder<'a> {
         implementations: Implementations,
     ) {
         builder.set_gleam(implementations.gleam);
+
         builder.set_uses_erlang_externals(implementations.externals_used.contains(Target::Erlang));
         builder.set_uses_javascript_externals(
             implementations.externals_used.contains(Target::JavaScript),
         );
+        builder.set_externals_used(implementations.externals_used.into());
+
         builder.set_can_run_on_erlang(implementations.can_run_on.contains(Target::Erlang));
         builder.set_can_run_on_javascript(implementations.can_run_on.contains(Target::JavaScript));
+        builder.set_can_run_on(implementations.can_run_on.into());
     }
 }

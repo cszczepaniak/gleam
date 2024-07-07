@@ -9,7 +9,7 @@ mod tests;
 
 use crate::{
     ast::{CustomType, Definition, Function, ModuleConstant, Publicity, TypeAlias},
-    build::Target,
+    build::{Target, TargetSet},
     io::ordered_map,
     type_::{expression::Implementations, Deprecation, Type, TypeVar},
 };
@@ -155,92 +155,24 @@ pub struct FunctionInterface {
 #[derive(Debug, Serialize, Copy, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct ImplementationsInterface {
-    /// Set to `true` if the const/function has a pure Gleam implementation
-    /// (that is, it never uses external code).
-    /// Being pure Gleam means that the function will support all Gleam
-    /// targets, even future ones that are not present to this day.
-    ///
-    /// Consider the following function:
-    ///
-    /// ```gleam
-    /// @external(erlang, "wibble", "wobble")
-    /// pub fn a_random_number() -> Int {
-    ///   4
-    ///   // This is a default implementation.
-    /// }
-    /// ```
-    ///
-    /// The implementations for this function will look like this:
-    ///
-    /// ```json
-    /// {
-    ///   gleam: true,
-    ///   can_run_on_erlang: true,
-    ///   can_run_on_javascript: true,
-    ///   uses_erlang_externals: true,
-    ///   uses_javascript_externals: false,
-    /// }
-    /// ```
-    ///
-    /// - `gleam: true` means that the function has a pure Gleam implementation
-    ///   and thus it can be used on all Gleam targets with no problems.
-    /// - `can_run_on_erlang: false` the function can be called on the Erlang
-    ///   target.
-    /// - `can_run_on_javascript: true` the function can be called on the JavaScript
-    ///   target.
-    /// - `uses_erlang_externals: true` means that the function will use Erlang
-    ///   external code when compiled to the Erlang target.
-    /// - `uses_javascript_externals: false` means that the function won't use
-    ///   JavaScript external code when compiled to JavaScript. The function can
-    ///   still be used on the JavaScript target since it has a pure Gleam
-    ///   implementation.
+    /// Indicates that the function has a pure Gleam implementation and this it
+    /// can be used on all Gleam targets with no problems. Being pure Gleam
+    /// means that the function will support all Gleam targets, even future ones
+    /// that are not present to this day.
     gleam: bool,
-    /// Set to `true` if the const/function is defined using Erlang external
-    /// code. That means that the function will use Erlang code through FFI when
-    /// compiled for the Erlang target.
+
+    /// Indicates which targets will use external code when compiled.
+    externals_used: TargetSet,
+    /// Indicates the targets the function can run on.
+    can_run_on: TargetSet,
+
+    #[deprecated = "use externals_used instead"]
     uses_erlang_externals: bool,
-    /// Set to `true` if the const/function is defined using JavaScript external
-    /// code. That means that the function will use JavaScript code through FFI
-    /// when compiled for the JavaScript target.
-    ///
-    /// Let's have a look at an example:
-    ///
-    /// ```gleam
-    /// @external(javascript, "wibble", "wobble")
-    /// pub fn javascript_only() -> Int
-    /// ```
-    ///
-    /// It's implementations field will look like this:
-    ///
-    /// ```json
-    /// {
-    ///   gleam: false,
-    ///   can_run_on_erlang: false,
-    ///   can_run_on_javascript: true,
-    ///   uses_erlang_externals: false,
-    ///   uses_javascript_externals: true,
-    /// }
-    /// ```
-    ///
-    /// - `gleam: false` means that the function doesn't have a pure Gleam
-    ///   implementations. This means that the function is only defined using
-    ///   externals and can only be used on some targets.
-    /// - `can_run_on_erlang: false` the function cannot be called on the Erlang
-    ///   target.
-    /// - `can_run_on_javascript: true` the function can be called on the JavaScript
-    ///   target.
-    /// - `uses_erlang_externals: false` the function is not using external
-    ///   Erlang code.
-    /// - `uses_javascript_externals: true` the function is using JavaScript
-    ///   external code.
+    #[deprecated = "use externals_used instead"]
     uses_javascript_externals: bool,
-    /// Whether the function can be called on the Erlang target, either due to a
-    /// pure Gleam implementation or an implementation that uses some Erlang
-    /// externals.
+    #[deprecated = "use can_run_on instead"]
     can_run_on_erlang: bool,
-    /// Whether the function can be called on the JavaScript target, either due
-    /// to a pure Gleam implementation or an implementation that uses some
-    /// JavaScript externals.
+    #[deprecated = "use can_run_on instead"]
     can_run_on_javascript: bool,
 }
 
@@ -261,10 +193,16 @@ impl ImplementationsInterface {
             can_run_on,
         } = implementations;
 
+        // Allow usage of the deprecated fields to maintain backwards
+        // compatibility.
+        #[allow(deprecated)]
         ImplementationsInterface {
             gleam: *gleam,
-            // TODO this is serialized and I don't know why yet, so I'm scared
-            // to change the format.
+            externals_used: *externals_used,
+            can_run_on: *can_run_on,
+
+            // These are deprecated and are maintained for backwards
+            // compatibility.
             uses_erlang_externals: externals_used.contains(Target::Erlang),
             uses_javascript_externals: externals_used.contains(Target::JavaScript),
             can_run_on_erlang: can_run_on.contains(Target::Erlang),

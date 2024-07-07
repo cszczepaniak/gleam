@@ -63,27 +63,14 @@ pub enum Target {
     #[strum(serialize = "javascript", serialize = "js")]
     #[serde(rename = "javascript", alias = "js")]
     JavaScript,
+    #[strum(serialize = "go", serialize = "go")]
+    #[serde(rename = "go", alias = "go")]
+    Go,
 }
 
 impl Target {
     pub fn variant_strings() -> Vec<EcoString> {
         Self::VARIANTS.iter().map(|s| (*s).into()).collect()
-    }
-
-    /// Returns `true` if the target is [`JavaScript`].
-    ///
-    /// [`JavaScript`]: Target::JavaScript
-    #[must_use]
-    pub fn is_javascript(&self) -> bool {
-        matches!(self, Self::JavaScript)
-    }
-
-    /// Returns `true` if the target is [`Erlang`].
-    ///
-    /// [`Erlang`]: Target::Erlang
-    #[must_use]
-    pub fn is_erlang(&self) -> bool {
-        matches!(self, Self::Erlang)
     }
 }
 
@@ -107,11 +94,23 @@ impl FromIterator<Target> for TargetSet {
 impl From<Target> for TargetSet {
     fn from(value: Target) -> Self {
         Self {
-            targets_set: match value {
-                Target::Erlang => 1 << 0,
-                Target::JavaScript => 1 << 1,
-            },
+            targets_set: 1 << value as usize,
         }
+    }
+}
+
+// These From implementations are useful for serialization/deserialization.
+impl From<u64> for TargetSet {
+    fn from(value: u64) -> Self {
+        Self {
+            targets_set: value as usize,
+        }
+    }
+}
+
+impl From<TargetSet> for u64 {
+    fn from(value: TargetSet) -> Self {
+        value.targets_set as u64
     }
 }
 
@@ -202,6 +201,7 @@ pub enum TargetCodegenConfiguration {
     Erlang {
         app_file: Option<ErlangAppCodegenConfiguration>,
     },
+    Go,
 }
 
 impl TargetCodegenConfiguration {
@@ -209,6 +209,7 @@ impl TargetCodegenConfiguration {
         match self {
             Self::JavaScript { .. } => Target::JavaScript,
             Self::Erlang { .. } => Target::Erlang,
+            Self::Go => Target::Go,
         }
     }
 }

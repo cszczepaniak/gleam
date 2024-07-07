@@ -21,6 +21,12 @@ expression: "\n//// Some package\n//// documentation!\n\npub fn main() { 1 }\n"
           "deprecation": null,
           "implementations": {
             "gleam": true,
+            "externals-used": {
+              "targets_set": 0
+            },
+            "can-run-on": {
+              "targets_set": 7
+            },
             "uses-erlang-externals": false,
             "uses-javascript-externals": false,
             "can-run-on-erlang": true,

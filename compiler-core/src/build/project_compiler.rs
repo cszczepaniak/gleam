@@ -239,7 +239,7 @@ where
 
     fn write_prelude(&self) -> Result<()> {
         // Only the JavaScript target has a prelude to write.
-        if !self.target().is_javascript() {
+        if self.target() != Target::JavaScript {
             return Ok(());
         }
 
@@ -533,6 +533,8 @@ where
                 // This path is relative to each package output directory
                 prelude_location: Utf8PathBuf::from("../prelude.mjs"),
             },
+
+            Target::Go => super::TargetCodegenConfiguration::Go,
         };
 
         let mut compiler = PackageCompiler::new(

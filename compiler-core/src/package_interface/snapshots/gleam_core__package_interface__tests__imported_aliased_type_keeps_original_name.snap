@@ -18,6 +18,12 @@ expression: "\nimport other_module.{type Element as Alias} as module_alias\npub 
           "deprecation": null,
           "implementations": {
             "gleam": true,
+            "externals-used": {
+              "targets_set": 0
+            },
+            "can-run-on": {
+              "targets_set": 7
+            },
             "uses-erlang-externals": false,
             "uses-javascript-externals": false,
             "can-run-on-erlang": true,
