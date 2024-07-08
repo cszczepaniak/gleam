@@ -33,7 +33,7 @@ mod panic;
 // mod type_alias;
 // mod use_;
 
-pub static CURRENT_PACKAGE: &str = "thepackage";
+// pub static CURRENT_PACKAGE: &str = "thepackage";
 
 #[macro_export]
 macro_rules! assert_go_with_multiple_imports {
@@ -160,7 +160,7 @@ pub fn compile_go(src: &str, deps: Vec<(&str, &str, &str)>) -> String {
     .unwrap()
 }
 
-pub fn compile_ts(src: &str, deps: Vec<(&str, &str, &str)>) -> String {
-    let ast = compile(src, deps);
-    ts_declaration(&ast, Utf8Path::new(""), &src.into()).unwrap()
-}
+// pub fn compile_ts(src: &str, deps: Vec<(&str, &str, &str)>) -> String {
+//     let ast = compile(src, deps);
+//     ts_declaration(&ast, Utf8Path::new(""), &src.into()).unwrap()
+// }
