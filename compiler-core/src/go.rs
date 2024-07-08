@@ -663,7 +663,7 @@ fn type_var(t: &TypeVar) -> Document<'static> {
         TypeVar::Link {
             type_: another_type,
         } => return_typ(another_type),
-        _ => panic!("i only know how to generate links right now"),
+        _ => panic!("i only know how to generate links right now, not {:?}", t),
     }
 }
 
