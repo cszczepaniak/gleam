@@ -22,6 +22,16 @@ fn a() {
     );
 }
 
+#[test]
+fn most_basic_string() {
+    assert_go!(
+        r#"
+fn a() {
+    "heya"
+}"#,
+    );
+}
+
 // #[test]
 // fn exported_functions() {
 //     assert_js!(

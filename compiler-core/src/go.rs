@@ -679,6 +679,7 @@ fn gleam_type(name: &str) -> Document<'static> {
     match name {
         "Int" => Document::Str("int"),
         "Bool" => Document::Str("bool"),
+        "String" => Document::Str("string"),
         _ => todo!(),
     }
 }
