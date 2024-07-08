@@ -979,7 +979,7 @@ impl<'module> Generator<'module> {
         let scope_position = self.scope_position;
         self.scope_position = Position::NotTail;
 
-        let _message = match message {
+        let message = match message {
             Some(m) => self.expression(m)?,
             None => string("panic expression evaluated"),
         };
@@ -988,8 +988,7 @@ impl<'module> Generator<'module> {
         // following clauses in a case expression.
         self.scope_position = scope_position;
 
-        // TODO this doesn't handle expressions or anything like that
-        Ok(docvec!["panic(\"panic expression evaluated\")".to_doc()])
+        Ok(docvec![message.surround("panic(", ")")])
     }
 
     fn throw_error<'a, Fields>(

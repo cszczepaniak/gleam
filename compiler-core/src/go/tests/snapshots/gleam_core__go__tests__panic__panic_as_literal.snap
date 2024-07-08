@@ -1,0 +1,9 @@
+---
+source: compiler-core/src/go/tests/panic.rs
+expression: "\nfn go() {\n  panic as \"wibble\"\n}\n"
+---
+package mod
+
+func go() {
+  panic("wibble")
+}

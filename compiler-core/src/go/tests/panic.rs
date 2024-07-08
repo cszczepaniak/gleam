@@ -10,7 +10,18 @@ fn a() {
 "#,
     );
 }
-//
+
+#[test]
+fn panic_as_literal() {
+    assert_go!(
+        r#"
+fn go() {
+  panic as "wibble"
+}
+"#,
+    );
+}
+
 // #[test]
 // fn panic_as() {
 //     assert_js!(
