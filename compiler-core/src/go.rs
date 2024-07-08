@@ -652,7 +652,7 @@ fn return_typ(t: &Type) -> Document<'static> {
             name,
             args: _,
         } => named_type(module, name),
-        Type::Fn { args: _, retrn: _ } => todo!(),
+        Type::Fn { args: _, retrn: _ } => panic!("i don't know how to generate function types yet"),
         Type::Var { type_: type_a, .. } => type_var(&type_a.borrow()),
         Type::Tuple { elems } => tuple_return_type(elems),
     }
@@ -663,14 +663,14 @@ fn type_var(t: &TypeVar) -> Document<'static> {
         TypeVar::Link {
             type_: another_type,
         } => return_typ(another_type),
-        _ => todo!(),
+        _ => panic!("i only know how to generate links right now"),
     }
 }
 
 fn named_type(module: &str, name: &str) -> Document<'static> {
     match module {
         "gleam" => gleam_type(name),
-        _ => todo!(),
+        _ => panic!("i can only generate named types for the gleam module right now"),
     }
 }
 
@@ -687,7 +687,7 @@ fn gleam_type(name: &str) -> Document<'static> {
         "Int" => Document::Str("int"),
         "Bool" => Document::Str("bool"),
         "String" => Document::Str("string"),
-        _ => todo!(),
+        s => panic!("unsupported gleam type for now: {}", s),
     }
 }
 
