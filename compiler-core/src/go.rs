@@ -172,19 +172,32 @@ impl<'a> Generator<'a> {
         };
 
         // Put it all together
+        let package = if let Some((_, last_seg)) = self.module.name.rsplit_once("/") {
+            last_seg
+        } else {
+            &self.module.name
+        };
+
+        let p = docvec![
+            Document::String(format!("package {}", package)),
+            line(),
+            line()
+        ];
 
         if imports.is_empty() && statements.is_empty() {
-            Ok(docvec![type_reference, "export {}", line()])
+            Ok(docvec![p, type_reference, "export {}", line()])
         } else if imports.is_empty() {
             statements.push(line());
-            Ok(docvec![type_reference, statements])
+            Ok(docvec![p, type_reference, statements])
         } else if statements.is_empty() {
             Ok(docvec![
+                p,
                 type_reference,
                 imports.into_doc(GoCodegenTarget::Go)
             ])
         } else {
             Ok(docvec![
+                p,
                 type_reference,
                 imports.into_doc(GoCodegenTarget::Go),
                 line(),
@@ -508,7 +521,7 @@ impl<'a> Generator<'a> {
             self.module_scope.clone(),
         );
         let head = if function.publicity.is_private() {
-            "function "
+            "func "
         } else {
             "export function "
         };
