@@ -5,7 +5,6 @@ mod pattern;
 mod tests;
 mod typescript;
 
-use std::cell::RefCell;
 use std::sync::Arc;
 
 use crate::analyse::TargetSupport;

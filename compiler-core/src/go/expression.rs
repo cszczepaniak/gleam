@@ -186,9 +186,7 @@ impl<'module> Generator<'module> {
                 message, location, ..
             } => self.todo(message.as_ref().map(|m| &**m), location),
 
-            TypedExpr::Panic {
-                location, message, ..
-            } => self.panic(location, message.as_ref().map(|m| &**m)),
+            TypedExpr::Panic { message, .. } => self.panic(message.as_ref().map(|m| &**m)),
 
             TypedExpr::BitArray { segments, .. } => self.bit_array(segments),
 
@@ -969,7 +967,7 @@ impl<'module> Generator<'module> {
         Ok(doc)
     }
 
-    fn panic<'a>(&mut self, location: &'a SrcSpan, message: Option<&'a TypedExpr>) -> Output<'a> {
+    fn panic<'a>(&mut self, message: Option<&'a TypedExpr>) -> Output<'a> {
         let scope_position = self.scope_position;
         self.scope_position = Position::NotTail;
 
