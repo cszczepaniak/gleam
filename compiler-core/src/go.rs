@@ -655,7 +655,7 @@ fn return_typ(t: &Type) -> Document<'static> {
         } => named_type(module, name),
         Type::Fn { args: _, retrn: _ } => todo!(),
         Type::Var { type_: type_a, .. } => type_var(&type_a.borrow()),
-        Type::Tuple { elems: _ } => todo!(),
+        Type::Tuple { elems } => tuple_return_type(elems),
     }
 }
 
@@ -673,6 +673,14 @@ fn named_type(module: &str, name: &str) -> Document<'static> {
         "gleam" => gleam_type(name),
         _ => todo!(),
     }
+}
+
+fn tuple_return_type(typs: &Vec<Arc<Type>>) -> Document<'static> {
+    docvec![
+        "(",
+        join(typs.iter().map(|t| return_typ(t)), Document::Str(", ")),
+        ")"
+    ]
 }
 
 fn gleam_type(name: &str) -> Document<'static> {

@@ -673,7 +673,11 @@ impl<'module> Generator<'module> {
 
     fn tuple<'a>(&mut self, elements: &'a [TypedExpr]) -> Output<'a> {
         self.not_in_tail_position(|gen| {
-            array(elements.iter().map(|element| gen.wrap_expression(element)))
+            let docs = elements
+                .iter()
+                .map(|element| gen.wrap_expression(element))
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(join(docs, Document::Str(", ")))
         })
     }
 

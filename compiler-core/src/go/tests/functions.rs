@@ -32,6 +32,16 @@ fn a() {
     );
 }
 
+#[test]
+fn simple_tuple_return() {
+    assert_go!(
+        r#"
+fn a() {
+    #("heya", 111)
+}"#,
+    );
+}
+
 // #[test]
 // fn exported_functions() {
 //     assert_js!(
