@@ -5,10 +5,13 @@ mod pattern;
 mod tests;
 mod typescript;
 
+use std::cell::RefCell;
+use std::sync::Arc;
+
 use crate::analyse::TargetSupport;
 use crate::build::Target;
 use crate::codegen::TypeScriptDeclarations;
-use crate::type_::PRELUDE_MODULE_NAME;
+use crate::type_::{Type, TypeVar, PRELUDE_MODULE_NAME};
 use crate::{
     ast::{CustomType, Function, Import, ModuleConstant, TypeAlias, *},
     docvec,
@@ -541,10 +544,13 @@ impl<'a> Generator<'a> {
             Err(error) => return Some(Err(error)),
         };
 
+        let _ = function.return_type;
         let document = docvec![
             head,
             maybe_escape_identifier_doc(function.name.as_str()),
             fun_args(function.arguments.as_slice(), generator.tail_recursion_used),
+            " ",
+            return_typ(&function.return_type),
             " {",
             docvec![line(), body].nest(INDENT).group(),
             line(),
@@ -636,6 +642,44 @@ fn fun_args(args: &'_ [TypedArg], tail_recursion_used: bool) -> Document<'_> {
         Some(name) if tail_recursion_used => Document::String(format!("loop${name}")),
         Some(name) => maybe_escape_identifier_doc(name),
     }))
+}
+
+fn return_typ(t: &Type) -> Document<'static> {
+    match t {
+        Type::Named {
+            publicity: _,
+            package: _,
+            module,
+            name,
+            args: _,
+        } => named_type(module, name),
+        Type::Fn { args: _, retrn: _ } => todo!(),
+        Type::Var { type_: type_a, .. } => type_var(&type_a.borrow()),
+        Type::Tuple { elems: _ } => todo!(),
+    }
+}
+
+fn type_var(t: &TypeVar) -> Document<'static> {
+    match t {
+        TypeVar::Link {
+            type_: another_type,
+        } => return_typ(another_type),
+        _ => todo!(),
+    }
+}
+
+fn named_type(module: &str, name: &str) -> Document<'static> {
+    match module {
+        "gleam" => gleam_type(name),
+        _ => todo!(),
+    }
+}
+
+fn gleam_type(name: &str) -> Document<'static> {
+    match name {
+        "Int" => Document::Str("int"),
+        _ => todo!(),
+    }
 }
 
 fn wrap_args<'a, I>(args: I) -> Document<'a>

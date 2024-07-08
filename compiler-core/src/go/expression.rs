@@ -87,8 +87,8 @@ impl<'module> Generator<'module> {
                 maybe_escape_identifier_doc(name)
             }
             Some(0) => maybe_escape_identifier_doc(name),
-            Some(n) if name == "$" => Document::String(format!("${n}")),
-            Some(n) => Document::String(format!("{name}${n}")),
+            Some(n) if name == "_" => Document::String(format!("_{n}")),
+            Some(n) => Document::String(format!("{name}_{n}")),
         }
     }
 
@@ -285,7 +285,7 @@ impl<'module> Generator<'module> {
 
     pub fn wrap_return<'a>(&mut self, document: Document<'a>) -> Document<'a> {
         if self.scope_position.is_tail() {
-            docvec!["return ", document, ";"]
+            docvec!["return ", document]
         } else {
             document
         }
@@ -522,19 +522,9 @@ impl<'module> Generator<'module> {
             let subject = self.not_in_tail_position(|gen| gen.wrap_expression(value))?;
             let js_name = self.next_local_var(name);
             return Ok(if self.scope_position.is_tail() {
-                docvec![
-                    "let ",
-                    js_name.clone(),
-                    " = ",
-                    subject,
-                    ";",
-                    line(),
-                    "return ",
-                    js_name,
-                    ";"
-                ]
+                docvec![js_name.clone(), " := ", subject, line(), "return ", js_name,]
             } else {
-                docvec!["let ", js_name, " = ", subject, ";"]
+                docvec![js_name, " := ", subject]
             }
             .force_break());
         }

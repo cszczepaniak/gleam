@@ -17,7 +17,7 @@ use camino::{Utf8Path, Utf8PathBuf};
 // mod consts;
 // mod custom_types;
 // mod externals;
-// mod functions;
+mod functions;
 // mod generics;
 // mod lists;
 // mod modules;
