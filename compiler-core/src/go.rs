@@ -174,7 +174,7 @@ impl<'a> Generator<'a> {
         };
 
         // Put it all together
-        let package = if let Some((_, last_seg)) = self.module.name.rsplit_once("/") {
+        let package = if let Some((_, last_seg)) = self.module.name.rsplit_once('/') {
             last_seg
         } else {
             &self.module.name
@@ -674,7 +674,7 @@ fn named_type(module: &str, name: &str) -> Document<'static> {
     }
 }
 
-fn tuple_return_type(typs: &Vec<Arc<Type>>) -> Document<'static> {
+fn tuple_return_type(typs: &[Arc<Type>]) -> Document<'static> {
     docvec![
         "(",
         join(typs.iter().map(|t| return_typ(t)), Document::Str(", ")),
