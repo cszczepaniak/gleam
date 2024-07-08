@@ -12,6 +12,16 @@ fn a() {
     );
 }
 
+#[test]
+fn most_basic_bool() {
+    assert_go!(
+        r#"
+fn a() {
+    True
+}"#,
+    );
+}
+
 // #[test]
 // fn exported_functions() {
 //     assert_js!(

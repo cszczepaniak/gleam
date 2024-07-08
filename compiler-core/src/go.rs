@@ -678,6 +678,7 @@ fn named_type(module: &str, name: &str) -> Document<'static> {
 fn gleam_type(name: &str) -> Document<'static> {
     match name {
         "Int" => Document::Str("int"),
+        "Bool" => Document::Str("bool"),
         _ => todo!(),
     }
 }
