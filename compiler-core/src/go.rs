@@ -720,7 +720,9 @@ fn type_var(t: &TypeVar, generic_usages: &HashMap<u64, u64>) -> Option<Document<
             Some(1) => None,
             Some(n) => panic!("not sure what to do with {} generic usages", n),
         },
-        _ => panic!("i only know how to generate links right now, not {:?}", t),
+        TypeVar::Generic { id: _ } => {
+            panic!("not sure what to do with TypeVar::Generic")
+        }
     }
 }
 
