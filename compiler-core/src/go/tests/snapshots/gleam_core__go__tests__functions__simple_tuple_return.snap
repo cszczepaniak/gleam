@@ -4,6 +4,12 @@ expression: "\nfn a() {\n    #(\"heya\", 111)\n}"
 ---
 package mod
 
-func a() (string, int) {
-  return "heya", 111
+func a() struct {
+F0 string
+  F1 int
+} {
+  return struct {
+  F0 string
+    F1 int
+  }{F0: "heya", F1: 111}
 }

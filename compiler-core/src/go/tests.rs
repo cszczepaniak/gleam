@@ -29,7 +29,7 @@ mod panic;
 // mod results;
 // mod strings;
 // mod todo;
-// mod tuples;
+mod tuples;
 // mod type_alias;
 // mod use_;
 
