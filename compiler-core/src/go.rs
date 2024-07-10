@@ -5,6 +5,8 @@ mod pattern;
 mod tests;
 mod typescript;
 
+use std::collections::HashMap;
+use std::ops::Deref;
 use std::sync::Arc;
 
 use crate::analyse::TargetSupport;
@@ -253,7 +255,7 @@ impl<'a> Generator<'a> {
                     return None;
                 }
 
-                self.module_function(function)
+                self.module_function(function, &function.return_type, &function.arguments)
             }
         }
     }
@@ -508,7 +510,17 @@ impl<'a> Generator<'a> {
         let _ = self.module_scope.insert(name.into(), 0);
     }
 
-    fn module_function(&mut self, function: &'a TypedFunction) -> Option<Output<'a>> {
+    fn module_function(
+        &mut self,
+        function: &'a TypedFunction,
+        return_type: &'a Arc<Type>,
+        args: &'a [TypedArg],
+    ) -> Option<Output<'a>> {
+        let generic_usages = collect_generic_usages(
+            HashMap::new(),
+            std::iter::once(return_type).chain(args.iter().map(|a| &a.type_)),
+        );
+
         let argument_names = function
             .arguments
             .iter()
@@ -543,14 +555,13 @@ impl<'a> Generator<'a> {
             Err(error) => return Some(Err(error)),
         };
 
-        let _ = function.return_type;
         let document = docvec![
             head,
             maybe_escape_identifier_doc(function.name.as_str()),
             fun_args(function.arguments.as_slice(), generator.tail_recursion_used),
             " ",
-            return_typ(&function.return_type),
-            " {",
+            return_typ(&function.return_type, &generic_usages).map(|d| docvec![d, " "]),
+            "{",
             docvec![line(), body].nest(INDENT).group(),
             line(),
             "}",
@@ -573,6 +584,44 @@ impl<'a> Generator<'a> {
 
                 Definition::TypeAlias(TypeAlias { .. })
                 | Definition::CustomType(CustomType { .. }) => (),
+            }
+        }
+    }
+}
+
+fn collect_generic_usages<'a>(
+    mut ids: HashMap<u64, u64>,
+    types: impl IntoIterator<Item = &'a Arc<Type>>,
+) -> HashMap<u64, u64> {
+    for typ in types {
+        generic_ids(typ, &mut ids);
+    }
+    ids
+}
+
+fn generic_ids(type_: &Type, ids: &mut HashMap<u64, u64>) {
+    match type_ {
+        Type::Var { type_: typ } => match typ.borrow().deref() {
+            TypeVar::Unbound { id, .. } | TypeVar::Generic { id, .. } => {
+                let count = ids.entry(*id).or_insert(0);
+                *count += 1;
+            }
+            TypeVar::Link { type_: typ } => generic_ids(typ, ids),
+        },
+        Type::Named { args, .. } => {
+            for arg in args {
+                generic_ids(arg, ids)
+            }
+        }
+        Type::Fn { args, retrn } => {
+            for arg in args {
+                generic_ids(arg, ids)
+            }
+            generic_ids(retrn, ids);
+        }
+        Type::Tuple { elems } => {
+            for elem in elems {
+                generic_ids(elem, ids)
             }
         }
     }
@@ -643,7 +692,7 @@ fn fun_args(args: &'_ [TypedArg], tail_recursion_used: bool) -> Document<'_> {
     }))
 }
 
-fn return_typ(t: &Type) -> Document<'static> {
+fn return_typ(t: &Type, generic_usages: &HashMap<u64, u64>) -> Option<Document<'static>> {
     match t {
         Type::Named {
             publicity: _,
@@ -651,18 +700,26 @@ fn return_typ(t: &Type) -> Document<'static> {
             module,
             name,
             args: _,
-        } => named_type(module, name),
+        } => Some(named_type(module, name)),
         Type::Fn { args: _, retrn: _ } => panic!("i don't know how to generate function types yet"),
-        Type::Var { type_: type_a, .. } => type_var(&type_a.borrow()),
-        Type::Tuple { elems } => tuple_return_type(elems),
+        Type::Var { type_: type_a, .. } => type_var(&type_a.borrow(), generic_usages),
+        Type::Tuple { elems } => Some(tuple_return_type(elems, generic_usages)),
     }
 }
 
-fn type_var(t: &TypeVar) -> Document<'static> {
+fn type_var(t: &TypeVar, generic_usages: &HashMap<u64, u64>) -> Option<Document<'static>> {
     match t {
         TypeVar::Link {
             type_: another_type,
-        } => return_typ(another_type),
+        } => return_typ(another_type, generic_usages),
+        TypeVar::Unbound { id } => match generic_usages.get(id) {
+            None => panic!("id not found"),
+            // In the case that we have one usage and it's the return type, it's
+            // probably because the function panics? I'm not sure if this is
+            // always true. It does what I want for now, though.
+            Some(1) => None,
+            Some(n) => panic!("not sure what to do with {} generic usages", n),
+        },
         _ => panic!("i only know how to generate links right now, not {:?}", t),
     }
 }
@@ -674,10 +731,13 @@ fn named_type(module: &str, name: &str) -> Document<'static> {
     }
 }
 
-fn tuple_return_type(typs: &[Arc<Type>]) -> Document<'static> {
+fn tuple_return_type(typs: &[Arc<Type>], generic_usages: &HashMap<u64, u64>) -> Document<'static> {
     docvec![
         "(",
-        join(typs.iter().map(|t| return_typ(t)), Document::Str(", ")),
+        join(
+            typs.iter().map(|t| return_typ(t, generic_usages).to_doc()),
+            Document::Str(", ")
+        ),
         ")"
     ]
 }
