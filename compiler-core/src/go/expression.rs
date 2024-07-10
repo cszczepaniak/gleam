@@ -671,12 +671,109 @@ impl<'module> Generator<'module> {
 
     fn tuple<'a>(&mut self, elements: &'a [TypedExpr]) -> Output<'a> {
         self.not_in_tail_position(|gen| {
-            let docs = elements
+            // We use struct literals for tuple types, like this:
+            // struct{
+            //      F0 t0
+            //      F1 t1
+            // }{F0: v0, F1: v1}
+            let fields = elements
                 .iter()
-                .map(|element| gen.wrap_expression(element))
+                .enumerate()
+                .map(|(i, element)| {
+                    gen.wrap_expression(element)
+                        .map(|e| docvec![Document::String(format!("F{i}: ")), e])
+                })
                 .collect::<Result<Vec<_>, _>>()?;
-            Ok(join(docs, Document::Str(", ")))
+
+            Ok(docvec![
+                gen.tuple_type(elements.iter().map(|e| e.type_().clone())),
+                "{",
+                join(fields, Document::Str(", ")),
+                "}",
+            ])
         })
+    }
+
+    fn tuple_type<'a>(&mut self, elements: impl Iterator<Item = Arc<Type>>) -> Document<'a> {
+        // We use structs for tuple types, like this:
+        // struct{
+        //      F0 t0
+        //      F1 t1
+        // }
+        let fields = join(
+            elements.enumerate().map(|(i, element)| {
+                docvec![
+                    Document::String(format!("F{i}")),
+                    " ",
+                    self.type_(&element, &HashMap::new())
+                ]
+            }),
+            line(),
+        );
+
+        fields
+            .nest(INDENT)
+            .surround("struct {".to_doc().append(line()), line().append("}"))
+    }
+
+    pub fn type_(
+        &mut self,
+        typ: &Type,
+        generic_usages: &HashMap<u64, u64>,
+    ) -> Option<Document<'static>> {
+        match typ {
+            Type::Named {
+                publicity: _,
+                package: _,
+                module,
+                name,
+                args: _,
+            } => Some(self.named_type(module, name)),
+            Type::Fn { args: _, retrn: _ } => {
+                panic!("i don't know how to generate function types yet")
+            }
+            Type::Var { type_: type_a, .. } => self.type_var(&type_a.borrow(), generic_usages),
+            Type::Tuple { elems } => Some(self.tuple_type(elems.iter().map(|e| e.clone()))),
+        }
+    }
+
+    fn type_var(
+        &mut self,
+        t: &TypeVar,
+        generic_usages: &HashMap<u64, u64>,
+    ) -> Option<Document<'static>> {
+        match t {
+            TypeVar::Link {
+                type_: another_type,
+            } => self.type_(another_type, generic_usages),
+            TypeVar::Unbound { id } => match generic_usages.get(id) {
+                None => panic!("id not found"),
+                // In the case that we have one usage and it's the return type, it's
+                // probably because the function panics? I'm not sure if this is
+                // always true. It does what I want for now, though.
+                Some(1) => None,
+                Some(n) => panic!("not sure what to do with {} generic usages", n),
+            },
+            TypeVar::Generic { id: _ } => {
+                panic!("not sure what to do with TypeVar::Generic")
+            }
+        }
+    }
+
+    fn named_type(&mut self, module: &str, name: &str) -> Document<'static> {
+        match module {
+            "gleam" => self.gleam_type(name),
+            _ => panic!("i can only generate named types for the gleam module right now"),
+        }
+    }
+
+    fn gleam_type(&mut self, name: &str) -> Document<'static> {
+        match name {
+            "Int" => Document::Str("int"),
+            "Bool" => Document::Str("bool"),
+            "String" => Document::Str("string"),
+            s => panic!("unsupported gleam type for now: {}", s),
+        }
     }
 
     fn call<'a>(&mut self, fun: &'a TypedExpr, arguments: &'a [CallArg<TypedExpr>]) -> Output<'a> {

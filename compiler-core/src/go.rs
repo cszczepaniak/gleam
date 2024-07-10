@@ -560,7 +560,9 @@ impl<'a> Generator<'a> {
             maybe_escape_identifier_doc(function.name.as_str()),
             fun_args(function.arguments.as_slice(), generator.tail_recursion_used),
             " ",
-            return_typ(&function.return_type, &generic_usages).map(|d| docvec![d, " "]),
+            generator
+                .type_(&function.return_type, &generic_usages)
+                .map(|d| docvec![d, " "]),
             "{",
             docvec![line(), body].nest(INDENT).group(),
             line(),
@@ -690,67 +692,6 @@ fn fun_args(args: &'_ [TypedArg], tail_recursion_used: bool) -> Document<'_> {
         Some(name) if tail_recursion_used => Document::String(format!("loop${name}")),
         Some(name) => maybe_escape_identifier_doc(name),
     }))
-}
-
-fn return_typ(t: &Type, generic_usages: &HashMap<u64, u64>) -> Option<Document<'static>> {
-    match t {
-        Type::Named {
-            publicity: _,
-            package: _,
-            module,
-            name,
-            args: _,
-        } => Some(named_type(module, name)),
-        Type::Fn { args: _, retrn: _ } => panic!("i don't know how to generate function types yet"),
-        Type::Var { type_: type_a, .. } => type_var(&type_a.borrow(), generic_usages),
-        Type::Tuple { elems } => Some(tuple_return_type(elems, generic_usages)),
-    }
-}
-
-fn type_var(t: &TypeVar, generic_usages: &HashMap<u64, u64>) -> Option<Document<'static>> {
-    match t {
-        TypeVar::Link {
-            type_: another_type,
-        } => return_typ(another_type, generic_usages),
-        TypeVar::Unbound { id } => match generic_usages.get(id) {
-            None => panic!("id not found"),
-            // In the case that we have one usage and it's the return type, it's
-            // probably because the function panics? I'm not sure if this is
-            // always true. It does what I want for now, though.
-            Some(1) => None,
-            Some(n) => panic!("not sure what to do with {} generic usages", n),
-        },
-        TypeVar::Generic { id: _ } => {
-            panic!("not sure what to do with TypeVar::Generic")
-        }
-    }
-}
-
-fn named_type(module: &str, name: &str) -> Document<'static> {
-    match module {
-        "gleam" => gleam_type(name),
-        _ => panic!("i can only generate named types for the gleam module right now"),
-    }
-}
-
-fn tuple_return_type(typs: &[Arc<Type>], generic_usages: &HashMap<u64, u64>) -> Document<'static> {
-    docvec![
-        "(",
-        join(
-            typs.iter().map(|t| return_typ(t, generic_usages).to_doc()),
-            Document::Str(", ")
-        ),
-        ")"
-    ]
-}
-
-fn gleam_type(name: &str) -> Document<'static> {
-    match name {
-        "Int" => Document::Str("int"),
-        "Bool" => Document::Str("bool"),
-        "String" => Document::Str("string"),
-        s => panic!("unsupported gleam type for now: {}", s),
-    }
 }
 
 fn wrap_args<'a, I>(args: I) -> Document<'a>
