@@ -13,6 +13,26 @@ fn a() {
 }
 
 #[test]
+fn explicit_return_type() {
+    assert_go!(
+        r#"
+fn a() -> Int {
+    123
+}"#,
+    );
+}
+
+#[test]
+fn explicit_return_type_with_panic() {
+    assert_go!(
+        r#"
+fn a() -> Int {
+    panic
+}"#,
+    );
+}
+
+#[test]
 fn most_basic_bool() {
     assert_go!(
         r#"
