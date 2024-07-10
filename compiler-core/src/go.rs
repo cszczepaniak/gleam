@@ -562,7 +562,8 @@ impl<'a> Generator<'a> {
             " ",
             generator
                 .type_(&function.return_type, &generic_usages)
-                .map(|d| docvec![d, " "]),
+                // If the type is Some(_), we need to put a space after it.
+                .map(|d| d.append(" ")),
             "{",
             docvec![line(), body].nest(INDENT).group(),
             line(),
