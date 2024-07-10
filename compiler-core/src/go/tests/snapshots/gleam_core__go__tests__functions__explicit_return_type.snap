@@ -1,0 +1,9 @@
+---
+source: compiler-core/src/go/tests/functions.rs
+expression: "\nfn a() -> Int {\n    123\n}"
+---
+package mod
+
+func a() int {
+  return 123
+}

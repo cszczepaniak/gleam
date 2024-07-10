@@ -1,0 +1,9 @@
+---
+source: compiler-core/src/go/tests/panic.rs
+expression: "\nfn a() {\n  panic\n}\n"
+---
+package mod
+
+func a() {
+  panic("panic expression evaluated")
+}

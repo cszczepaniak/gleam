@@ -1,0 +1,9 @@
+---
+source: compiler-core/src/go/tests/functions.rs
+expression: "\nfn a() {\n    #(\"heya\", 111)\n}"
+---
+package mod
+
+func a() (string, int) {
+  return "heya", 111
+}
