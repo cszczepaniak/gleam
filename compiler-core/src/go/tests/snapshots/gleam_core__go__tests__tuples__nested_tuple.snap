@@ -1,6 +1,5 @@
 ---
 source: compiler-core/src/go/tests/tuples.rs
-assertion_line: 16
 expression: "\nfn a() {\n  #(\n    \"1111111111111111111111111111111\",\n    #(\"1111111111111111111111111111111\", \"2\", \"3\"),\n    \"3\",\n  )\n}\n"
 ---
 package mod
